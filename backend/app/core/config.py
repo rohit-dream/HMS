@@ -37,20 +37,26 @@ class Settings(BaseSettings):
     database_pool_size: int = Field(default=5, ge=1, le=50)
     database_max_overflow: int = Field(default=10, ge=0, le=100)
     database_echo: bool = False
+    database_connect_timeout_seconds: int = Field(default=3, ge=1, le=30)
 
     # Redis
     redis_url: str = Field(
         default="redis://localhost:6379/0",
         description="Redis connection URL",
     )
+    redis_connect_timeout_seconds: int = Field(default=2, ge=1, le=30)
 
     # CORS
     cors_origins: str = "http://localhost:5173"
 
-    # JWT paths (Sprint 2)
+    # JWT (RS256)
     jwt_private_key_path: str = "./keys/private.pem"
     jwt_public_key_path: str = "./keys/public.pem"
     jwt_access_token_expire_minutes: int = 30
+    jwt_issuer: str = "https://auth.platform.com"
+    jwt_refresh_token_expire_days: int = 7
+    tenant_base_domain: str = "platform.com"
+    auth_rate_limit_per_minute: int = Field(default=10, ge=1, le=1000)
 
     # AWS placeholders
     aws_region: str = "ap-south-1"

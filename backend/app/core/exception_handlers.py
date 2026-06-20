@@ -6,11 +6,14 @@ from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.core.exceptions import (
+    AccountLockedError,
     AppError,
     ConflictError,
     ForbiddenError,
     NotFoundError,
     PlanLimitError,
+    RateLimitExceededError,
+    TenantSuspendedError,
     UnauthorizedError,
 )
 from app.core.logging import get_logger
@@ -24,6 +27,9 @@ _STATUS_MAP: dict[type[AppError], int] = {
     ForbiddenError: 403,
     ConflictError: 409,
     PlanLimitError: 402,
+    AccountLockedError: 423,
+    TenantSuspendedError: 403,
+    RateLimitExceededError: 429,
 }
 
 

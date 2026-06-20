@@ -1,12 +1,13 @@
 """Health probe endpoints."""
 
+import asyncio
+
 from fastapi import APIRouter, Request, status
 from fastapi.responses import JSONResponse
 
 from app.core.config import get_settings
-from app.core.database import check_database_connection
 from app.core.response import success_response
-from app.core.startup import check_redis_connection
+from app.core.startup import run_connectivity_checks
 
 router = APIRouter(tags=["health"])
 
@@ -27,11 +28,10 @@ def liveness(request: Request) -> dict:
 
 
 @router.get("/health/ready")
-def readiness(request: Request) -> JSONResponse:
+async def readiness(request: Request) -> JSONResponse:
     """Readiness probe — database and Redis connectivity."""
     settings = get_settings()
-    db_ok = check_database_connection(settings)
-    redis_ok = check_redis_connection(settings)
+    db_ok, redis_ok = await asyncio.to_thread(run_connectivity_checks, settings)
     healthy = db_ok and redis_ok
 
     body = success_response(

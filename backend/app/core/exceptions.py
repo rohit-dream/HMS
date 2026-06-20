@@ -44,3 +44,18 @@ class ValidationError(AppError):
 class PlanLimitError(AppError):
     def __init__(self, message: str = "Plan limit exceeded", field: str | None = None) -> None:
         super().__init__(message, code="plan_limit_exceeded", field=field)
+
+
+class AccountLockedError(AppError):
+    def __init__(self, message: str = "Account is locked", field: str | None = None) -> None:
+        super().__init__(message, code="account_locked", field=field)
+
+
+class TenantSuspendedError(AppError):
+    def __init__(self, message: str = "Tenant is suspended", field: str | None = None) -> None:
+        super().__init__(message, code="tenant_suspended", field=field)
+
+
+class RateLimitExceededError(AppError):
+    def __init__(self, message: str = "Too many requests", field: str | None = None) -> None:
+        super().__init__(message, code="rate_limit_exceeded", field=field)

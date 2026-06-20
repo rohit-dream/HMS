@@ -14,6 +14,10 @@ _engine: Engine | None = None
 _SessionLocal: sessionmaker[Session] | None = None
 
 
+def _connect_args(settings: Settings) -> dict[str, int]:
+    return {"connect_timeout": settings.database_connect_timeout_seconds}
+
+
 def get_engine(settings: Settings | None = None) -> Engine:
     """Return or create the SQLAlchemy engine singleton."""
     global _engine
@@ -25,6 +29,7 @@ def get_engine(settings: Settings | None = None) -> Engine:
             pool_size=settings.database_pool_size,
             max_overflow=settings.database_max_overflow,
             echo=settings.database_echo,
+            connect_args=_connect_args(settings),
         )
     return _engine
 
@@ -77,8 +82,6 @@ def check_database_connection(settings: Settings | None = None) -> bool:
         return True
     except Exception:
         return False
-    finally:
-        engine.dispose()
 
 
 def dispose_engine() -> None:

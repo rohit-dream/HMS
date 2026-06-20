@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import uuid
-from typing import Any, TypeVar
+from typing import TypeVar
 
 from sqlalchemy import Select, select
 from sqlalchemy.orm import Session

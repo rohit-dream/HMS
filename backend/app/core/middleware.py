@@ -33,6 +33,15 @@ def register_middleware(app: FastAPI, settings: Settings) -> None:
         finally:
             clear_request_context()
 
+    @app.middleware("http")
+    async def authorization_context_middleware(request: Request, call_next: Callable) -> Response:
+        """Initialize authorization state; resolved by get_authorization_context dependency."""
+        if not hasattr(request.state, "permissions"):
+            request.state.permissions = []
+        if not hasattr(request.state, "roles"):
+            request.state.roles = []
+        return await call_next(request)
+
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origin_list,
