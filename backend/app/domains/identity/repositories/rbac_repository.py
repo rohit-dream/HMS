@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import uuid
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.models.core.permission import Permission
@@ -103,6 +103,43 @@ class RbacRepository:
         row = UserRole(tenant_id=tenant_id, user_id=user_id, role_id=role_id)
         self.db.add(row)
         return row
+
+    def remove_role_from_user(
+        self,
+        tenant_id: uuid.UUID,
+        user_id: uuid.UUID,
+        role_id: uuid.UUID,
+        *,
+        removed_by: uuid.UUID | None = None,
+    ) -> bool:
+        row = self.db.scalars(
+            select(UserRole).where(
+                UserRole.tenant_id == tenant_id,
+                UserRole.user_id == user_id,
+                UserRole.role_id == role_id,
+                UserRole.deleted_at.is_(None),
+            )
+        ).first()
+        if row is None:
+            return False
+        row.soft_delete(by=removed_by)
+        self.db.add(row)
+        return True
+
+    def count_users_with_role(self, tenant_id: uuid.UUID, role_code: str) -> int:
+        stmt = (
+            select(func.count())
+            .select_from(UserRole)
+            .join(Role, Role.id == UserRole.role_id)
+            .where(
+                UserRole.tenant_id == tenant_id,
+                UserRole.deleted_at.is_(None),
+                Role.tenant_id == tenant_id,
+                Role.code == role_code,
+                Role.deleted_at.is_(None),
+            )
+        )
+        return int(self.db.scalar(stmt) or 0)
 
 
 class TenantRbacRepository(TenantScopedRepository):

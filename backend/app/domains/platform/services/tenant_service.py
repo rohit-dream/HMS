@@ -9,6 +9,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.exceptions import ConflictError, NotFoundError, ValidationError
+from app.core.database import set_rls_tenant_context
 from app.core.security import hash_password
 from app.domains.identity.services.rbac_service import RbacProvisioner
 from app.domains.platform.constants import (
@@ -123,6 +124,7 @@ class TenantService:
         except IntegrityError as exc:
             raise ConflictError("Tenant could not be created — duplicate identifier", field="slug") from exc
 
+        set_rls_tenant_context(self.db, tenant_id)
         self._provision_hospital_resources(tenant_id)
         return tenant_id
 

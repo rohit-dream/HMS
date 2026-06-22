@@ -16,6 +16,9 @@ ignore = ["E501"]
 testpaths = ["tests"]
 pythonpath = ["."]
 addopts = "-ra"
+markers = [
+    "integration: integration tests requiring PostgreSQL (deselect with '-m not integration')",
+]
 
 [tool.coverage.run]
 source = ["app"]

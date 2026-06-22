@@ -1,11 +1,4 @@
-"""
-Protected admin endpoints demonstrating RBAC API protection strategy.
-
-Protection layers:
-1. Authentication — Depends(get_current_user) via RequirePermission
-2. Authorization — require_permission("module:action")
-3. Tenant scope — resolved from authenticated user context
-"""
+"""Admin endpoints — settings, audit (user routes in admin_users)."""
 
 from __future__ import annotations
 
@@ -17,27 +10,14 @@ from app.core.response import success_response
 router = APIRouter(prefix="/admin", tags=["admin"])
 
 
-@router.get("/users")
-def list_users(
-    request: Request,
-    ctx: AuthorizationContext = Depends(require_permission("admin:users")),
-) -> dict:
-    """List tenant users — requires admin:users."""
-    return success_response(
-        data={"message": "User management endpoint", "roles": ctx.roles},
-        request_id=request.state.request_id,
-        tenant_id=ctx.user.tenant_id,
-    )
-
-
 @router.get("/settings")
 def get_settings(
     request: Request,
     ctx: AuthorizationContext = Depends(require_permission("admin:settings")),
 ) -> dict:
-    """Tenant settings — requires admin:settings."""
+    """Tenant settings placeholder — see /hospital/settings for full implementation."""
     return success_response(
-        data={"message": "Tenant settings endpoint"},
+        data={"message": "Use GET /api/v1/hospital/settings for tenant configuration"},
         request_id=request.state.request_id,
         tenant_id=ctx.user.tenant_id,
     )

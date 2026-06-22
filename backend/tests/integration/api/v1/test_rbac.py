@@ -72,7 +72,10 @@ def test_hospital_admin_can_access_admin_users(client: TestClient, rbac_tenant_u
         },
     )
     assert resp.status_code == status.HTTP_200_OK
-    assert resp.json()["data"]["message"] == "User management endpoint"
+    body = resp.json()
+    assert "data" in body
+    assert isinstance(body["data"], list)
+    assert body["meta"]["pagination"]["total_items"] >= 1
 
 
 def test_receptionist_denied_admin_users(client: TestClient, receptionist_user: dict) -> None:

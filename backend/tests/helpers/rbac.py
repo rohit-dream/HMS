@@ -4,14 +4,16 @@ from __future__ import annotations
 
 import uuid
 
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from app.core.database import set_rls_tenant_context
 from app.domains.identity.services.rbac_service import RbacProvisioner
 from app.domains.platform.constants import DEFAULT_TENANT_SETTINGS, PRIMARY_LOCATION_CODE, PRIMARY_LOCATION_NAME
 from app.domains.platform.repositories.location_repository import LocationRepository
 from app.domains.platform.repositories.setting_repository import SettingRepository
 from app.models.core.user import User
-from app.models.platform.tenant import Tenant
+from app.domains.platform.repositories.tenant_repository import TenantRepository
 
 
 def provision_tenant_with_role(
@@ -23,21 +25,21 @@ def provision_tenant_with_role(
     role_code: str = "hospital_admin",
 ) -> dict:
     """Create tenant, user, RBAC templates, and assign role."""
+    db.execute(text("RESET ROLE"))
+    set_rls_tenant_context(db, None)
     provisioner = RbacProvisioner(db)
     provisioner.seed_system_rbac()
 
     tenant_id = uuid.uuid4()
-    tenant = Tenant(
-        id=tenant_id,
-        tenant_id=tenant_id,
-        name=f"Test {slug}",
-        slug=slug,
-        subdomain=slug,
-        status="active",
+    slug_normalized = slug.lower()
+    repo = TenantRepository(db)
+    tenant_id = repo.create_via_db_function(
+        name=f"Test {slug_normalized}",
+        slug=slug_normalized,
         email=email,
+        subdomain=slug_normalized,
     )
-    db.add(tenant)
-    db.flush()
+    set_rls_tenant_context(db, tenant_id)
 
     provisioner.provision_tenant_rbac(tenant_id)
 

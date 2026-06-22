@@ -52,6 +52,20 @@ jobs:
       - name: Lint
         run: ruff check .
 
+      - name: Gate G1 verification (Sprint 2)
+        env:
+          ENVIRONMENT: test
+          DATABASE_URL: postgresql://hms:hms@localhost:5432/hms_test
+          REDIS_URL: redis://localhost:6379/0
+        run: pytest tests/integration/test_gate_g1.py -v
+
+      - name: Tenant isolation regression (mandatory)
+        env:
+          ENVIRONMENT: test
+          DATABASE_URL: postgresql://hms:hms@localhost:5432/hms_test
+          REDIS_URL: redis://localhost:6379/0
+        run: pytest tests/integration/test_tenant_isolation.py -v
+
       - name: Test
         env:
           ENVIRONMENT: test

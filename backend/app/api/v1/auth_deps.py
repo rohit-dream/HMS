@@ -9,7 +9,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
 from app.core.config import Settings, get_settings
-from app.core.database import get_db
+from app.core.database import get_db, set_rls_tenant_context
 from app.core.exceptions import UnauthorizedError
 from app.core.tenant.context import clear_auth_context, set_auth_context
 from app.domains.identity.services.auth_service import AuthenticatedUser, AuthService
@@ -38,6 +38,7 @@ def get_current_user(
     auth_user = auth_service.validate_access_token(credentials.credentials)
 
     set_auth_context(tenant_id=auth_user.tenant_id, user_id=auth_user.user_id)
+    set_rls_tenant_context(db, auth_user.tenant_id)
     request.state.tenant_id = str(auth_user.tenant_id)
     request.state.user_id = str(auth_user.user_id)
     return auth_user

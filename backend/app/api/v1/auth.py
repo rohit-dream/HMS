@@ -14,7 +14,9 @@ from app.core.rate_limit import check_auth_rate_limit
 from app.core.response import success_response
 from app.core.security import decode_access_token
 from app.domains.identity.schemas.auth import LoginRequest
+from app.domains.identity.schemas.user import SelfProfileUpdateRequest
 from app.domains.identity.services.auth_service import AuthenticatedUser, AuthService
+from app.domains.identity.services.user_management_service import UserManagementService
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -128,6 +130,23 @@ def get_me(
 ) -> dict:
     """Return authenticated user profile."""
     data = auth_service.get_me(auth_user)
+    return success_response(
+        data=data.model_dump(mode="json"),
+        request_id=request.state.request_id,
+        tenant_id=auth_user.tenant_id,
+    )
+
+
+@router.patch("/me")
+def update_me(
+    request: Request,
+    payload: SelfProfileUpdateRequest,
+    auth_user: AuthenticatedUser = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> dict:
+    """Update own profile (name, phone, avatar)."""
+    service = UserManagementService(db, auth_user.tenant_id)
+    data = service.update_self_profile(auth_user.user_id, payload)
     return success_response(
         data=data.model_dump(mode="json"),
         request_id=request.state.request_id,

@@ -67,6 +67,8 @@ python -m scripts.validate_structure
 
 ## Documentation
 
+- [Testing strategy](docs/TESTING_STRATEGY.md)
+- [Deployment guide](docs/DEPLOYMENT_GUIDE.md)
 - [Development sequence](docs/DEVELOPMENT_SEQUENCE.md)
 - [Backend Sprint 1 guide](docs/BACKEND_SPRINT1_EXECUTION.md)
 - [Frontend Sprint 1 guide](docs/FRONTEND_SPRINT1_EXECUTION.md)

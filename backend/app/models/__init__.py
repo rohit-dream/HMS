@@ -11,6 +11,7 @@ from app.models.base import (
     UUIDPrimaryKeyMixin,
     active_row_filter,
 )
+from app.models.core.password_reset_token import PasswordResetToken
 from app.models.core.permission import Permission
 from app.models.core.role import Role
 from app.models.core.role_permission import RolePermission
@@ -26,6 +27,7 @@ __all__ = [
     "Base",
     "ImmutableTenantEntity",
     "Permission",
+    "PasswordResetToken",
     "Role",
     "RolePermission",
     "SoftDeleteMixin",

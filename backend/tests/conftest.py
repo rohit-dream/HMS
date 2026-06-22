@@ -1,6 +1,8 @@
 """Pytest configuration and shared fixtures."""
 
 import os
+import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -17,6 +19,25 @@ from app.core.security import clear_key_cache
 from app.main import create_app
 
 _KEYS_DIR = Path(__file__).resolve().parents[1] / "keys"
+_BACKEND_ROOT = Path(__file__).resolve().parents[1]
+
+
+def _run_alembic_upgrade() -> None:
+    result = subprocess.run(
+        [sys.executable, "-m", "alembic", "upgrade", "head"],
+        cwd=_BACKEND_ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        pytest.fail(f"alembic upgrade head failed:\n{result.stderr or result.stdout}")
+
+
+@pytest.fixture(scope="session", autouse=True)
+def ensure_database_migrations() -> None:
+    """Apply Alembic migrations before integration tests (session-scoped)."""
+    _run_alembic_upgrade()
 
 
 def _ensure_test_jwt_keys() -> tuple[str, str]:

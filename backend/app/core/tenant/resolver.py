@@ -8,7 +8,7 @@ Per MULTI_TENANT_DESIGN.md:
 
 from __future__ import annotations
 
-from sqlalchemy import select
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 from starlette.requests import Request
 
@@ -61,14 +61,27 @@ def resolve_tenant_for_login(
             field="tenant",
         )
 
-    stmt = (
-        select(Tenant)
-        .where(Tenant.deleted_at.is_(None))
-        .where((Tenant.subdomain == slug_or_subdomain) | (Tenant.slug == slug_or_subdomain))
-    )
-    tenant = db.scalars(stmt).first()
-    if tenant is None:
+    row = db.execute(
+        text("SELECT * FROM platform.lookup_tenant_for_login(:identifier)"),
+        {"identifier": slug_or_subdomain},
+    ).mappings().first()
+
+    if row is None:
         raise NotFoundError("Tenant not found", field="tenant")
+
+    tenant = db.get(Tenant, row["id"])
+    if tenant is None:
+        # Hydrate from SECURITY DEFINER lookup when RLS blocks direct ORM load.
+        tenant = Tenant(
+            id=row["id"],
+            tenant_id=row["tenant_id"],
+            name=row["name"],
+            slug=row["slug"],
+            subdomain=row["subdomain"],
+            status=row["status"],
+            email=row["email"],
+            deleted_at=row["deleted_at"],
+        )
 
     if not tenant.is_login_allowed:
         raise ForbiddenError(

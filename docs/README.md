@@ -15,6 +15,8 @@ Architecture and product documentation for the Hospital Management SaaS platform
 | [MULTI_TENANT_DESIGN.md](MULTI_TENANT_DESIGN.md) | Tenant isolation |
 | [RBAC_DESIGN.md](RBAC_DESIGN.md) | Roles and permissions |
 | [SECURITY_ARCHITECTURE.md](SECURITY_ARCHITECTURE.md) | Security controls |
+| [TESTING_STRATEGY.md](TESTING_STRATEGY.md) | Unit, integration, API, E2E testing |
+| [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) | Local, staging, and production deployment |
 | [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) | Solo dev execution plan |
 | [SPRINT_PLAN.md](SPRINT_PLAN.md) | Sprint breakdown |
 | [ROADMAP.md](ROADMAP.md) | MVP phases 1–3 |

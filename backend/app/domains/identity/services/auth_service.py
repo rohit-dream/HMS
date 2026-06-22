@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from starlette.requests import Request
 
 from app.core.config import Settings, get_settings
+from app.core.database import set_rls_tenant_context
 from app.core.exceptions import (
     AccountLockedError,
     ForbiddenError,
@@ -30,6 +31,7 @@ from app.core.security import (
     verify_password,
 )
 from app.core.tenant.resolver import resolve_tenant_for_login
+from app.core.tenant.context import set_request_tenant_id
 from app.core.permissions import PermissionResolver
 from app.domains.identity.repositories.session_repository import SessionRepository
 from app.domains.identity.repositories.tenant_repository import TenantRepository
@@ -69,6 +71,8 @@ class AuthService:
     ) -> tuple[LoginResponseData, str]:
         """Authenticate user and return access token payload + opaque refresh token."""
         tenant = resolve_tenant_for_login(self.db, request, self.settings)
+        set_request_tenant_id(tenant.id)
+        set_rls_tenant_context(self.db, tenant.id)
         user_repo = UserRepository(self.db, tenant.id)
         session_repo = SessionRepository(self.db, tenant.id)
 

@@ -54,6 +54,27 @@ def success_response(
     ).model_dump(mode="json")
 
 
+def paginated_response(
+    data: Any,
+    request_id: str,
+    *,
+    tenant_id: UUID | str | None = None,
+    page: int,
+    page_size: int,
+    total_items: int,
+) -> dict[str, Any]:
+    """Build a success envelope with pagination metadata."""
+    total_pages = (total_items + page_size - 1) // page_size if page_size else 0
+    meta = build_meta(request_id, tenant_id)
+    meta.pagination = PaginationMeta(
+        page=page,
+        page_size=page_size,
+        total_items=total_items,
+        total_pages=total_pages,
+    )
+    return APIResponse(data=data, meta=meta, errors=None).model_dump(mode="json")
+
+
 def error_response(
     errors: list[ErrorDetail],
     request_id: str,
