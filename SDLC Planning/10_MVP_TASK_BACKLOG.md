@@ -43,41 +43,41 @@
 
 | ID | Task | Hrs | Status |
 |----|------|-----|--------|
-| MVP-021 | Alembic 003 auth tables + RLS | 3 | 🔄 |
-| MVP-022 | email_verification_tokens table | 1 | ❌ |
+| MVP-021 | Alembic 003 auth tables + RLS | 3 | ✅ |
+| MVP-022 | email_verification_tokens table | 1 | ✅ |
 | MVP-023 | JWT RS256 + bcrypt module | 4 | ✅ |
 | MVP-024 | Auth service sessions + refresh | 6 | ✅ |
 | MVP-025 | Auth API (login/logout/refresh/me) | 6 | ✅ |
-| MVP-026 | Forgot/reset password API | 4 | 🔄 |
-| MVP-027 | Email verify + resend API | 3 | ❌ |
-| MVP-028 | CAPTCHA on register | 2 | ❌ |
-| MVP-029 | Auth rate limiting Redis | 2 | ❌ |
-| MVP-030 | Frontend AuthProvider + login | 8 | ❌ |
-| MVP-031 | Frontend forgot/reset/verify pages | 4 | ❌ |
-| MVP-032 | Auth integration + E2E tests | 6 | 🔄 |
-| MVP-033 | audit_logs migration + login audit writes | 3 | ❌ |
-| MVP-034 | Session idle timeout (frontend) | 2 | ❌ |
-| MVP-035 | JWT key generation script | 1 | ❌ |
+| MVP-026 | Forgot/reset password API | 4 | ✅ |
+| MVP-027 | Email verify + resend API | 3 | ✅ |
+| MVP-028 | CAPTCHA on register | 2 | ✅ |
+| MVP-029 | Auth rate limiting Redis | 2 | ✅ |
+| MVP-030 | Frontend AuthProvider + login | 8 | ✅ |
+| MVP-031 | Frontend forgot/reset/verify pages | 4 | ✅ |
+| MVP-032 | Auth integration + E2E tests | 6 | ✅ |
+| MVP-033 | audit_logs migration + login audit writes | 3 | ✅ |
+| MVP-034 | Session idle timeout (frontend) | 2 | ✅ |
+| MVP-035 | JWT key generation script | 1 | ✅ |
 
 ## Sprint 4 — RBAC + Hospital Admin (MVP-036 – MVP-050)
 
 | ID | Task | Hrs | Status |
 |----|------|-----|--------|
-| MVP-036 | Alembic 004 RBAC + invite tokens + RLS | 4 | 🔄 |
+| MVP-036 | Alembic 004 RBAC + invite tokens + RLS | 4 | ✅ |
 | MVP-037 | Permission catalog seed (+ opd:queue) | 3 | ✅ |
 | MVP-038 | Permission resolver + Redis | 4 | ✅ |
 | MVP-039 | require_permission decorator | 3 | ✅ |
 | MVP-040 | User management API | 8 | ✅ |
-| MVP-041 | accept-invite API + invite flow | 4 | ❌ |
+| MVP-041 | accept-invite API + invite flow | 4 | ✅ |
 | MVP-042 | Hospital profile/locations/settings API | 8 | ✅ |
-| MVP-043 | Email adapter (SES stub) | 4 | ❌ |
-| MVP-044 | Subscription status middleware | 3 | 🔄 |
-| MVP-045 | Privacy/terms acceptance on register | 2 | ❌ |
-| MVP-046 | Registration wizard UI | 8 | ❌ |
-| MVP-047 | Protected routes + role landing | 4 | ❌ |
-| MVP-048 | PermissionGuard + usePermissions | 4 | ❌ |
-| MVP-049 | Hospital + user + system config UI | 12 | ❌ |
-| MVP-050 | Gate G2 E2E test | 4 | ❌ |
+| MVP-043 | Email adapter (SES stub) | 4 | ✅ |
+| MVP-044 | Subscription status middleware | 3 | ✅ |
+| MVP-045 | Privacy/terms acceptance on register | 2 | ✅ |
+| MVP-046 | Registration wizard UI | 8 | ✅ |
+| MVP-047 | Protected routes + role landing | 4 | ✅ |
+| MVP-048 | PermissionGuard + usePermissions | 4 | ✅ |
+| MVP-049 | Hospital + user + system config UI | 12 | ✅ |
+| MVP-050 | Gate G2 E2E test | 4 | ✅ |
 
 ## Sprint 5 — API Standards + OPD Spec (MVP-051 – MVP-058)
 

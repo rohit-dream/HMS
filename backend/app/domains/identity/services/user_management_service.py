@@ -8,26 +8,32 @@ from datetime import UTC, datetime, timedelta
 
 from sqlalchemy.orm import Session
 
+from app.adapters.email import EmailNotificationService
 from app.core.exceptions import ConflictError, ForbiddenError, NotFoundError, ValidationError
 from app.core.permissions import PermissionResolver
 from app.core.rbac.catalog import TENANT_ROLE_CODES
+from app.core.config import get_settings
 from app.core.security import hash_password, hash_refresh_token
 from app.domains.identity.constants import (
     HOSPITAL_OWNER_ROLE,
     MAX_HOSPITAL_OWNERS_PER_TENANT,
     PASSWORD_RESET_TOKEN_HOURS,
     PLATFORM_ADMIN_ROLE,
+    USER_INVITE_TOKEN_HOURS,
 )
 from app.domains.identity.repositories.password_reset_repository import PasswordResetRepository
 from app.domains.identity.repositories.rbac_repository import RbacRepository
 from app.domains.identity.repositories.session_repository import SessionRepository
+from app.domains.identity.repositories.user_invite_repository import UserInviteRepository
 from app.domains.identity.repositories.user_repository import UserRepository
+from app.domains.platform.repositories.tenant_repository import TenantRepository
 from app.domains.identity.schemas.user import (
     AdminResetPasswordRequest,
     AssignRoleRequest,
     SelfProfileUpdateRequest,
     UserCreateRequest,
     UserInviteRequest,
+    UserInviteResponse,
     UserListItem,
     UserProfileResponse,
     UserUpdateRequest,
@@ -45,7 +51,10 @@ class UserManagementService:
         self._rbac = RbacRepository(db)
         self._sessions = SessionRepository(db, tenant_id)
         self._reset_tokens = PasswordResetRepository(db, tenant_id)
+        self._invite_tokens = UserInviteRepository(db, tenant_id)
         self._permissions = PermissionResolver(db)
+        self._email = EmailNotificationService(get_settings())
+        self._tenant_repo = TenantRepository(db)
 
     def search_users(
         self,
@@ -83,7 +92,7 @@ class UserManagementService:
         self.db.commit()
         return self._to_profile(user)
 
-    def invite_user(self, payload: UserInviteRequest, *, actor_id: uuid.UUID) -> UserProfileResponse:
+    def invite_user(self, payload: UserInviteRequest, *, actor_id: uuid.UUID) -> UserInviteResponse:
         if self._users.email_exists(str(payload.email)):
             raise ConflictError("Email already registered in this tenant", field="email")
 
@@ -101,8 +110,32 @@ class UserManagementService:
         for role_code in payload.role_codes:
             self._assign_role_internal(user.id, role_code, actor_id=actor_id, commit=False)
 
+        raw_token = secrets.token_urlsafe(32)
+        expires_at = datetime.now(UTC) + timedelta(hours=USER_INVITE_TOKEN_HOURS)
+        self._invite_tokens.invalidate_all_for_user(user.id)
+        self._invite_tokens.create_token(
+            user_id=user.id,
+            token_hash=hash_refresh_token(raw_token),
+            expires_at=expires_at,
+            created_by=actor_id,
+        )
+
         self.db.commit()
-        return self._to_profile(user)
+        profile = self._to_profile(user)
+        tenant = self._tenant_repo.get_by_id(self.tenant_id)
+        if tenant is not None:
+            self._email.send_user_invite(
+                to_email=user.email,
+                token=raw_token,
+                tenant_id=self.tenant_id,
+                tenant_slug=tenant.slug,
+                hospital_name=tenant.name,
+            )
+        return UserInviteResponse(
+            **profile.model_dump(),
+            invite_token=raw_token,
+            invite_expires_at=expires_at,
+        )
 
     def update_user(
         self,

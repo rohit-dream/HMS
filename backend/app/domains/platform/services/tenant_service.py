@@ -8,13 +8,18 @@ from datetime import UTC, datetime, timedelta
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.adapters.email import EmailNotificationService
 from app.core.exceptions import ConflictError, NotFoundError, ValidationError
+from app.core.config import get_settings
 from app.core.database import set_rls_tenant_context
 from app.core.security import hash_password
 from app.domains.identity.services.rbac_service import RbacProvisioner
 from app.domains.platform.constants import (
     ACTIVATABLE_STATUSES,
+    CURRENT_PRIVACY_POLICY_VERSION,
+    CURRENT_TERMS_VERSION,
     DEFAULT_TENANT_SETTINGS,
+    LEGAL_ACCEPTANCE_SETTING_KEY,
     PRIMARY_LOCATION_CODE,
     PRIMARY_LOCATION_NAME,
     SUSPENDABLE_STATUSES,
@@ -44,16 +49,22 @@ class TenantService:
     def register_tenant(self, payload: TenantRegisterRequest) -> TenantRegisterResponse:
         """Full self-service registration with owner user."""
         tenant_id = self._provision_core(payload)
-        self._create_owner_user(
+        owner_user_id = self._create_owner_user(
             tenant_id=tenant_id,
             email=str(payload.email).lower(),
             first_name=payload.owner_first_name,
             last_name=payload.owner_last_name,
             password=payload.owner_password,
         )
+        self._record_legal_acceptance(tenant_id, payload, owner_user_id)
         self.db.commit()
         tenant = self._tenant_repo.get_by_id(tenant_id)
         assert tenant is not None
+        EmailNotificationService(get_settings()).send_welcome(
+            to_email=str(payload.email).lower(),
+            tenant_slug=tenant.slug,
+            hospital_name=tenant.name,
+        )
         return TenantRegisterResponse(
             tenant=TenantResponse.model_validate(tenant),
             trial_ends_at=datetime.now(UTC) + timedelta(days=self.TRIAL_DAYS),
@@ -153,7 +164,7 @@ class TenantService:
         first_name: str,
         last_name: str,
         password: str,
-    ) -> None:
+    ) -> uuid.UUID:
         user = User(
             tenant_id=tenant_id,
             email=email,
@@ -165,6 +176,31 @@ class TenantService:
         self.db.add(user)
         self.db.flush()
         RbacProvisioner(self.db).assign_role(tenant_id, user.id, "hospital_owner")
+        return user.id
+
+    def _record_legal_acceptance(
+        self,
+        tenant_id: uuid.UUID,
+        payload: TenantRegisterRequest,
+        accepted_by_user_id: uuid.UUID,
+    ) -> None:
+        """Persist versioned Terms + Privacy acceptance at signup (NFR-COMP-008)."""
+        setting_repo = SettingRepository(self.db, tenant_id)
+        setting_repo.upsert(
+            setting_key=LEGAL_ACCEPTANCE_SETTING_KEY,
+            setting_value={
+                "terms_version": CURRENT_TERMS_VERSION,
+                "privacy_policy_version": CURRENT_PRIVACY_POLICY_VERSION,
+                "terms_accepted": payload.accept_terms,
+                "privacy_policy_accepted": payload.accept_privacy_policy,
+                "accepted_at": datetime.now(UTC).isoformat(),
+                "accepted_by_user_id": str(accepted_by_user_id),
+                "accepted_by_email": str(payload.email).lower(),
+            },
+            description="Signup legal acceptance audit record",
+            created_by=accepted_by_user_id,
+            updated_by=accepted_by_user_id,
+        )
 
     def _get_tenant_or_404(self, tenant_id: uuid.UUID) -> Tenant:
         tenant = self._tenant_repo.get_by_id(tenant_id)

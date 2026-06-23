@@ -91,6 +91,48 @@ def test_receptionist_denied_admin_users(client: TestClient, receptionist_user: 
     assert resp.json()["errors"][0]["code"] == "forbidden"
 
 
+def test_unauthenticated_admin_users_returns_401(client: TestClient, rbac_tenant_user: dict) -> None:
+    resp = client.get(
+        "/api/v1/admin/users",
+        headers={TENANT_SLUG_HEADER: rbac_tenant_user["slug"]},
+    )
+    assert resp.status_code == status.HTTP_401_UNAUTHORIZED
+
+
+def test_hospital_owner_wildcard_accesses_admin_users(client: TestClient) -> None:
+    tenant_id = uuid.uuid4()
+    email = f"owner-{tenant_id.hex[:8]}@example.com"
+    slug = f"owner-{tenant_id.hex[:8]}"
+
+    with session_scope() as db:
+        provision_tenant_with_role(
+            db,
+            slug=slug,
+            email=email,
+            password_hash=hash_password("SecurePass@123"),
+            role_code="hospital_owner",
+        )
+
+    token = _login(client, slug, email)
+    resp = client.get(
+        "/api/v1/admin/users",
+        headers={TENANT_SLUG_HEADER: slug, "Authorization": f"Bearer {token}"},
+    )
+    assert resp.status_code == status.HTTP_200_OK
+
+
+def test_receptionist_denied_hospital_settings(client: TestClient, receptionist_user: dict) -> None:
+    token = _login(client, receptionist_user["slug"], receptionist_user["email"])
+    resp = client.get(
+        "/api/v1/hospital/profile",
+        headers={
+            TENANT_SLUG_HEADER: receptionist_user["slug"],
+            "Authorization": f"Bearer {token}",
+        },
+    )
+    assert resp.status_code == status.HTTP_403_FORBIDDEN
+
+
 def test_receptionist_can_read_patients(client: TestClient, receptionist_user: dict) -> None:
     token = _login(client, receptionist_user["slug"], receptionist_user["email"])
     resp = client.get(

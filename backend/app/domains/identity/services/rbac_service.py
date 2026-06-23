@@ -8,6 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.constants import SYSTEM_TENANT_ID
+from app.core.permissions import PermissionResolver
 from app.core.rbac.catalog import (
     PERMISSION_CATALOG,
     ROLE_CATALOG,
@@ -61,6 +62,29 @@ class RbacProvisioner:
         self._clone_permissions(system_id, tenant_id)
         self._seed_roles(tenant_id, role_codes=set(TENANT_ROLE_CODES))
         self._clone_role_permissions(system_id, tenant_id)
+        self.db.flush()
+
+    def sync_catalog_for_all_tenants(self) -> None:
+        """MVP-037: upsert catalog permissions and role mappings on system + all tenants."""
+        system_id = self.ensure_system_tenant()
+        self._seed_permissions(system_id)
+        self._seed_roles(system_id, role_codes={code for code, _, _ in ROLE_CATALOG})
+        self._seed_role_permissions(system_id)
+        self.db.flush()
+
+        tenant_ids = self.db.scalars(
+            select(Tenant.id).where(
+                Tenant.id != system_id,
+                Tenant.deleted_at.is_(None),
+            )
+        ).all()
+        resolver = PermissionResolver(self.db)
+        for tenant_id in tenant_ids:
+            self._clone_permissions(system_id, tenant_id)
+            self._seed_roles(tenant_id, role_codes=set(TENANT_ROLE_CODES))
+            self._seed_role_permissions(tenant_id)
+            resolver.invalidate_tenant(tenant_id)
+        resolver.invalidate_tenant(system_id)
         self.db.flush()
 
     def assign_role(self, tenant_id: uuid.UUID, user_id: uuid.UUID, role_code: str) -> None:

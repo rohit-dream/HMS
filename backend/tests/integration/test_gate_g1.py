@@ -35,7 +35,7 @@ from app.repositories.base import TenantScopedRepository
 pytestmark = pytest.mark.integration
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-EXPECTED_ALEMBIC_HEAD = "011_system_tenant_plans_seed"
+EXPECTED_ALEMBIC_HEAD = "013_email_verification_tokens"
 
 
 @pytest.fixture(autouse=True)
@@ -263,6 +263,8 @@ def test_g1_register_api_returns_201_with_tenant_id(client: TestClient) -> None:
         "owner_first_name": "Gate",
         "owner_last_name": "Test",
         "owner_password": "SecurePass@123",
+        "accept_terms": True,
+        "accept_privacy_policy": True,
     }
     resp = client.post("/api/v1/platform/register", json=payload)
     assert resp.status_code == status.HTTP_201_CREATED

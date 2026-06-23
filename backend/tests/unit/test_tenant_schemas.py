@@ -24,6 +24,8 @@ def test_register_request_normalizes_slug() -> None:
         owner_first_name="A",
         owner_last_name="B",
         owner_password="password123",
+        accept_terms=True,
+        accept_privacy_policy=True,
     )
     assert req.slug == "my-clinic-01"
 
@@ -37,4 +39,34 @@ def test_register_request_rejects_short_password() -> None:
             owner_first_name="A",
             owner_last_name="B",
             owner_password="short",
+            accept_terms=True,
+            accept_privacy_policy=True,
+        )
+
+
+def test_register_request_requires_terms_acceptance() -> None:
+    with pytest.raises(ValidationError):
+        TenantRegisterRequest(
+            name="Test",
+            slug="valid-slug",
+            email="a@b.com",
+            owner_first_name="A",
+            owner_last_name="B",
+            owner_password="password123",
+            accept_terms=False,
+            accept_privacy_policy=True,
+        )
+
+
+def test_register_request_requires_privacy_acceptance() -> None:
+    with pytest.raises(ValidationError):
+        TenantRegisterRequest(
+            name="Test",
+            slug="valid-slug",
+            email="a@b.com",
+            owner_first_name="A",
+            owner_last_name="B",
+            owner_password="password123",
+            accept_terms=True,
+            accept_privacy_policy=False,
         )

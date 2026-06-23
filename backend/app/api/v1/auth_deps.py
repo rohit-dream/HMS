@@ -12,6 +12,8 @@ from app.core.config import Settings, get_settings
 from app.core.database import get_db, set_rls_tenant_context
 from app.core.exceptions import UnauthorizedError
 from app.core.tenant.context import clear_auth_context, set_auth_context
+from app.core.tenant.subscription import enforce_tenant_subscription
+from app.domains.identity.repositories.tenant_repository import TenantRepository
 from app.domains.identity.services.auth_service import AuthenticatedUser, AuthService
 
 _bearer_scheme = HTTPBearer(auto_error=False)
@@ -36,6 +38,11 @@ def get_current_user(
 
     auth_service = AuthService(db, settings)
     auth_user = auth_service.validate_access_token(credentials.credentials)
+
+    tenant = TenantRepository(db).get_by_id(auth_user.tenant_id)
+    if tenant is None:
+        raise UnauthorizedError("Invalid tenant context")
+    enforce_tenant_subscription(request, tenant, api_v1_prefix=settings.api_v1_prefix)
 
     set_auth_context(tenant_id=auth_user.tenant_id, user_id=auth_user.user_id)
     set_rls_tenant_context(db, auth_user.tenant_id)

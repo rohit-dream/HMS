@@ -16,6 +16,7 @@ CLINICAL_SETTINGS_DEFAULT: dict = {
     "vitals_unit": "metric",
     "temperature_unit": "celsius",
     "default_consultation_duration_minutes": 15,
+    "mrn_prefix": "MRN",
 }
 
 BILLING_SETTINGS_DEFAULT: dict = {
@@ -23,16 +24,27 @@ BILLING_SETTINGS_DEFAULT: dict = {
     "receipt_prefix": "RCP",
     "currency_display": "INR",
     "tax_inclusive_pricing": False,
+    "tax_rate": 18.0,
+}
+
+SYSTEM_SETTINGS_DEFAULT: dict = {
+    "date_format": "DD/MM/YYYY",
 }
 
 DEFAULT_TENANT_SETTINGS: dict[str, tuple[dict, str]] = {
     "onboarding_progress": (ONBOARDING_PROGRESS_DEFAULT, "Onboarding wizard progress"),
     "clinical": (CLINICAL_SETTINGS_DEFAULT, "Clinical workflow defaults"),
     "billing": (BILLING_SETTINGS_DEFAULT, "Billing and invoicing defaults"),
+    "system": (SYSTEM_SETTINGS_DEFAULT, "System display and formatting defaults"),
 }
 
 PRIMARY_LOCATION_CODE = "MAIN"
 PRIMARY_LOCATION_NAME = "Main Branch"
+
+# NFR-COMP-008 — versioned legal documents accepted at signup.
+CURRENT_TERMS_VERSION = "2026-01"
+CURRENT_PRIVACY_POLICY_VERSION = "2026-01"
+LEGAL_ACCEPTANCE_SETTING_KEY = "legal_acceptance"
 
 RESERVED_TENANT_SLUGS = frozenset({
     "admin", "api", "app", "assets", "auth", "billing", "dashboard",

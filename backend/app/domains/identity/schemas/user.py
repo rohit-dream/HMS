@@ -115,6 +115,13 @@ class UserProfileResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class UserInviteResponse(UserProfileResponse):
+    """Invite result — includes one-time token until email adapter sends the link."""
+
+    invite_token: str
+    invite_expires_at: datetime
+
+
 class UserListItem(BaseModel):
     id: uuid.UUID
     email: str

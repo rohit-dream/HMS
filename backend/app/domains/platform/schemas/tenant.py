@@ -7,7 +7,7 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel, EmailStr, Field, field_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator
 
 _SLUG_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 
@@ -34,6 +34,17 @@ class TenantRegisterRequest(BaseModel):
     owner_first_name: str = Field(min_length=1, max_length=100)
     owner_last_name: str = Field(min_length=1, max_length=100)
     owner_password: str = Field(min_length=8, max_length=128)
+    captcha_token: str | None = Field(default=None, max_length=4096)
+    accept_terms: bool = Field(description="Must be true — Terms of Service acceptance")
+    accept_privacy_policy: bool = Field(description="Must be true — Privacy Policy acceptance")
+
+    @model_validator(mode="after")
+    def require_legal_acceptance(self) -> TenantRegisterRequest:
+        if not self.accept_terms:
+            raise ValueError("Terms of Service must be accepted")
+        if not self.accept_privacy_policy:
+            raise ValueError("Privacy Policy must be accepted")
+        return self
 
     @field_validator("slug")
     @classmethod
@@ -88,6 +99,13 @@ class TenantResponse(BaseModel):
 class TenantRegisterResponse(BaseModel):
     tenant: TenantResponse
     trial_ends_at: datetime | None = None
+
+
+class LegalVersionsResponse(BaseModel):
+    terms_version: str
+    privacy_policy_version: str
+    terms_url: str
+    privacy_policy_url: str
 
 
 class HospitalProfileResponse(BaseModel):

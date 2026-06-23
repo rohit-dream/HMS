@@ -58,11 +58,18 @@ class Settings(BaseSettings):
     tenant_base_domain: str = "platform.com"
     auth_rate_limit_per_minute: int = Field(default=10, ge=1, le=1000)
 
+    # CAPTCHA (hCaptcha)
+    captcha_bypass: bool = False
+    hcaptcha_secret_key: str = ""
+    captcha_verify_timeout_seconds: int = Field(default=5, ge=1, le=30)
+
     # AWS placeholders
     aws_region: str = "ap-south-1"
     s3_bucket: str = "hms-dev-files"
     sqs_queue_url: str = ""
     ses_from_email: str = "noreply@platform.com"
+    email_provider: Literal["log", "ses"] = "log"
+    frontend_base_url: str = "http://localhost:5173"
 
     # Startup validation
     skip_startup_checks: bool = False

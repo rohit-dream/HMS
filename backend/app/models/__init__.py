@@ -11,11 +11,14 @@ from app.models.base import (
     UUIDPrimaryKeyMixin,
     active_row_filter,
 )
+from app.models.audit.audit_log import AuditLog
+from app.models.core.email_verification_token import EmailVerificationToken
 from app.models.core.password_reset_token import PasswordResetToken
 from app.models.core.permission import Permission
 from app.models.core.role import Role
 from app.models.core.role_permission import RolePermission
 from app.models.core.user import User
+from app.models.core.user_invite_token import UserInviteToken
 from app.models.core.user_role import UserRole
 from app.models.core.user_session import UserSession
 from app.models.platform.tenant import Tenant
@@ -23,10 +26,12 @@ from app.models.platform.tenant_location import TenantLocation
 from app.models.platform.tenant_setting import TenantSetting
 
 __all__ = [
+    "AuditLog",
     "AuditMixin",
     "Base",
     "ImmutableTenantEntity",
     "Permission",
+    "EmailVerificationToken",
     "PasswordResetToken",
     "Role",
     "RolePermission",
@@ -38,6 +43,7 @@ __all__ = [
     "TenantSetting",
     "TimestampMixin",
     "User",
+    "UserInviteToken",
     "UserRole",
     "UserSession",
     "UUIDPrimaryKeyMixin",

@@ -56,7 +56,7 @@ def _run_step(title: str, command: list[str]) -> bool:
 def main() -> int:
     print("Gate G1 — Sprint 2 Foundation Verification")
     print(f"Repository: {REPO_ROOT}")
-    print(f"Expected Alembic head: 011_system_tenant_plans_seed")
+    print("Expected Alembic head: 013_email_verification_tokens")
 
     infra_ok = (REPO_ROOT / "docker-compose.yml").is_file() and (
         REPO_ROOT / ".github" / "workflows" / "ci.yml"

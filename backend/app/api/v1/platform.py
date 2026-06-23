@@ -8,16 +8,39 @@ from fastapi import APIRouter, Depends, Request, status
 from fastapi.responses import JSONResponse
 
 from app.api.v1.platform_deps import get_tenant_service
+from app.adapters.captcha import verify_captcha_token
 from app.core.authorization import AuthorizationContext, require_permission
+from app.core.config import Settings, get_settings
+from app.core.rate_limit import check_auth_rate_limit
 from app.core.response import success_response
 from app.domains.platform.schemas.tenant import (
+    LegalVersionsResponse,
     TenantCreateRequest,
     TenantRegisterRequest,
     TenantStatusActionRequest,
 )
+from app.domains.platform.constants import (
+    CURRENT_PRIVACY_POLICY_VERSION,
+    CURRENT_TERMS_VERSION,
+)
 from app.domains.platform.services.tenant_service import TenantService
 
 router = APIRouter(prefix="/platform", tags=["platform"])
+
+
+@router.get("/legal-versions")
+def get_legal_versions(request: Request, settings: Settings = Depends(get_settings)) -> dict:
+    """Public legal document versions for signup UI (NFR-COMP-008)."""
+    data = LegalVersionsResponse(
+        terms_version=CURRENT_TERMS_VERSION,
+        privacy_policy_version=CURRENT_PRIVACY_POLICY_VERSION,
+        terms_url=f"{settings.frontend_base_url.rstrip('/')}/legal/terms",
+        privacy_policy_url=f"{settings.frontend_base_url.rstrip('/')}/legal/privacy",
+    )
+    return success_response(
+        data=data.model_dump(mode="json"),
+        request_id=request.state.request_id,
+    )
 
 
 @router.post("/register", status_code=status.HTTP_201_CREATED)
@@ -25,12 +48,16 @@ def register_tenant(
     request: Request,
     payload: TenantRegisterRequest,
     service: TenantService = Depends(get_tenant_service),
+    settings: Settings = Depends(get_settings),
 ) -> JSONResponse:
     """
     Public self-service tenant registration.
 
     Provisions tenant, RBAC, primary location, settings, and hospital_owner user.
     """
+    check_auth_rate_limit(request, settings)
+    client_ip = request.client.host if request.client else None
+    verify_captcha_token(payload.captcha_token, remote_ip=client_ip, settings=settings)
     data = service.register_tenant(payload)
     body = success_response(
         data=data.model_dump(mode="json"),

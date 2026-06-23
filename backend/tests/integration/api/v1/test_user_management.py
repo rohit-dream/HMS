@@ -121,6 +121,8 @@ def test_invite_user_inactive(client: TestClient, admin_tenant: dict) -> None:
     body = resp.json()["data"]
     assert body["status"] == "inactive"
     assert "receptionist" in body["roles"]
+    assert body["invite_token"]
+    assert body["invite_expires_at"]
 
 
 def test_assign_and_remove_role(client: TestClient, admin_tenant: dict) -> None:
@@ -224,3 +226,58 @@ def test_reset_password_and_token(client: TestClient, admin_tenant: dict) -> Non
     token_body = token_resp.json()["data"]
     assert token_body["reset_token"]
     assert token_body["expires_at"]
+
+
+def test_create_duplicate_email_returns_conflict(client: TestClient, admin_tenant: dict) -> None:
+    token = _login(client, admin_tenant["slug"], admin_tenant["email"])
+    headers = _auth_headers(admin_tenant["slug"], token)
+    payload = {
+        "email": "duplicate@example.com",
+        "password": "DupPass@123",
+        "first_name": "Dup",
+        "last_name": "User",
+    }
+
+    first = client.post("/api/v1/admin/users", json=payload, headers=headers)
+    assert first.status_code == status.HTTP_201_CREATED
+
+    second = client.post("/api/v1/admin/users", json=payload, headers=headers)
+    assert second.status_code == status.HTTP_409_CONFLICT
+    assert second.json()["errors"][0]["code"] == "conflict"
+
+
+def test_get_nonexistent_user_returns_404(client: TestClient, admin_tenant: dict) -> None:
+    token = _login(client, admin_tenant["slug"], admin_tenant["email"])
+    headers = _auth_headers(admin_tenant["slug"], token)
+
+    resp = client.get(f"/api/v1/admin/users/{uuid.uuid4()}", headers=headers)
+    assert resp.status_code == status.HTTP_404_NOT_FOUND
+
+
+def test_cross_tenant_user_lookup_returns_404(client: TestClient) -> None:
+    suffix_a = uuid.uuid4().hex[:8]
+    suffix_b = uuid.uuid4().hex[:8]
+    slug_a = f"um-a-{suffix_a}"
+    slug_b = f"um-b-{suffix_b}"
+
+    with session_scope() as db:
+        data_a = provision_tenant_with_role(
+            db,
+            slug=slug_a,
+            email=f"um-a-{suffix_a}@example.com",
+            password_hash=hash_password("SecurePass@123"),
+            role_code="hospital_admin",
+        )
+        data_b = provision_tenant_with_role(
+            db,
+            slug=slug_b,
+            email=f"um-b-{suffix_b}@example.com",
+            password_hash=hash_password("SecurePass@123"),
+            role_code="hospital_admin",
+        )
+
+    token_a = _login(client, slug_a, f"um-a-{suffix_a}@example.com")
+    headers_a = _auth_headers(slug_a, token_a)
+
+    resp = client.get(f"/api/v1/admin/users/{data_b['user_id']}", headers=headers_a)
+    assert resp.status_code == status.HTTP_404_NOT_FOUND

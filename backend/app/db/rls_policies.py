@@ -12,6 +12,29 @@ PLATFORM_RLS_TABLES: tuple[str, ...] = (
     "tenant_settings",
 )
 
+AUDIT_RLS_TABLES: tuple[str, ...] = (
+    "audit_logs",
+)
+
+CORE_RBAC_RLS_TABLES: tuple[str, ...] = (
+    "roles",
+    "permissions",
+    "role_permissions",
+    "user_roles",
+)
+
+CORE_RBAC_INVITE_RLS_TABLES: tuple[str, ...] = (
+    *CORE_RBAC_RLS_TABLES,
+    "user_invite_tokens",
+)
+
+CORE_AUTH_RLS_TABLES: tuple[str, ...] = (
+    "users",
+    "user_sessions",
+    "password_reset_tokens",
+    "email_verification_tokens",
+)
+
 TENANT_ISOLATION_USING = (
     "tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::uuid"
 )

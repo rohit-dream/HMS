@@ -5,13 +5,26 @@ from __future__ import annotations
 import uuid
 from datetime import UTC, datetime
 
-from sqlalchemy import select
+from sqlalchemy import select, text
+from sqlalchemy.orm import Session
 
 from app.models.core.password_reset_token import PasswordResetToken
 from app.repositories.base import TenantScopedRepository
 
 
 class PasswordResetRepository(TenantScopedRepository):
+    @staticmethod
+    def find_valid_by_hash(db: Session, token_hash: str) -> PasswordResetToken | None:
+        """Cross-tenant lookup for public reset-password (token is globally unique)."""
+        db.execute(text("RESET ROLE"))
+        stmt = select(PasswordResetToken).where(
+            PasswordResetToken.token_hash == token_hash,
+            PasswordResetToken.used_at.is_(None),
+            PasswordResetToken.deleted_at.is_(None),
+            PasswordResetToken.expires_at > datetime.now(UTC),
+        )
+        return db.scalars(stmt).first()
+
     def create_token(
         self,
         *,

@@ -6,15 +6,15 @@ import sys
 from pathlib import Path
 
 import pytest
-from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric import rsa
 from fastapi.testclient import TestClient
 
 os.environ.setdefault("ENVIRONMENT", "test")
 os.environ.setdefault("SKIP_STARTUP_CHECKS", "true")
 os.environ.setdefault("REDIS_URL", "redis://localhost:6379/0")
+os.environ.setdefault("CAPTCHA_BYPASS", "true")
 
 from app.core.config import get_settings
+from app.core.jwt_keygen import ensure_jwt_keys
 from app.core.security import clear_key_cache
 from app.main import create_app
 
@@ -41,24 +41,7 @@ def ensure_database_migrations() -> None:
 
 
 def _ensure_test_jwt_keys() -> tuple[str, str]:
-    _KEYS_DIR.mkdir(parents=True, exist_ok=True)
-    private_path = _KEYS_DIR / "private.pem"
-    public_path = _KEYS_DIR / "public.pem"
-    if not private_path.exists():
-        private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
-        private_path.write_bytes(
-            private_key.private_bytes(
-                encoding=serialization.Encoding.PEM,
-                format=serialization.PrivateFormat.PKCS8,
-                encryption_algorithm=serialization.NoEncryption(),
-            )
-        )
-        public_path.write_bytes(
-            private_key.public_key().public_bytes(
-                encoding=serialization.Encoding.PEM,
-                format=serialization.PublicFormat.SubjectPublicKeyInfo,
-            )
-        )
+    private_path, public_path = ensure_jwt_keys(_KEYS_DIR)
     clear_key_cache()
     return str(private_path), str(public_path)
 

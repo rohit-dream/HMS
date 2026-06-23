@@ -13,7 +13,14 @@ from app.core.database import get_db
 from app.core.rate_limit import check_auth_rate_limit
 from app.core.response import success_response
 from app.core.security import decode_access_token
-from app.domains.identity.schemas.auth import LoginRequest
+from app.domains.identity.schemas.auth import (
+    AcceptInviteRequest,
+    ForgotPasswordRequest,
+    LoginRequest,
+    MessageResponseData,
+    ResetPasswordRequest,
+    VerifyEmailRequest,
+)
 from app.domains.identity.schemas.user import SelfProfileUpdateRequest
 from app.domains.identity.services.auth_service import AuthenticatedUser, AuthService
 from app.domains.identity.services.user_management_service import UserManagementService
@@ -116,7 +123,11 @@ def logout(
     claims = decode_access_token(token, settings)
 
     refresh_value = request.cookies.get(REFRESH_TOKEN_COOKIE)
-    AuthService(db, settings).logout(claims=claims, refresh_token=refresh_value)
+    AuthService(db, settings).logout(
+        claims=claims,
+        refresh_token=refresh_value,
+        request=request,
+    )
 
     _clear_refresh_cookie(response, settings)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
@@ -149,6 +160,102 @@ def update_me(
     data = service.update_self_profile(auth_user.user_id, payload)
     return success_response(
         data=data.model_dump(mode="json"),
+        request_id=request.state.request_id,
+        tenant_id=auth_user.tenant_id,
+    )
+
+
+@router.post("/forgot-password")
+def forgot_password(
+    payload: ForgotPasswordRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+) -> dict:
+    """Request a password reset link (always returns success to prevent enumeration)."""
+    check_auth_rate_limit(request, settings)
+    message = AuthService(db, settings).forgot_password(
+        request=request,
+        email=str(payload.email).lower(),
+    )
+    return success_response(
+        data=MessageResponseData(message=message).model_dump(mode="json"),
+        request_id=request.state.request_id,
+    )
+
+
+@router.post("/reset-password")
+def reset_password(
+    payload: ResetPasswordRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+) -> dict:
+    """Reset password using a one-time token from email."""
+    check_auth_rate_limit(request, settings)
+    message = AuthService(db, settings).reset_password(
+        token=payload.token,
+        new_password=payload.new_password,
+        request=request,
+    )
+    return success_response(
+        data=MessageResponseData(message=message).model_dump(mode="json"),
+        request_id=request.state.request_id,
+    )
+
+
+@router.post("/accept-invite", response_model=None)
+def accept_invite(
+    payload: AcceptInviteRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+) -> JSONResponse:
+    """Activate invited user with password and issue login tokens."""
+    check_auth_rate_limit(request, settings)
+    data, refresh_token = AuthService(db, settings).accept_invite(
+        invite_token=payload.invite_token,
+        password=payload.password,
+        request=request,
+    )
+    body = success_response(
+        data=data.model_dump(mode="json"),
+        request_id=request.state.request_id,
+        tenant_id=data.user.tenant_id,
+    )
+    json_response = JSONResponse(content=body)
+    _set_refresh_cookie(json_response, refresh_token, settings)
+    return json_response
+
+
+@router.post("/verify-email")
+def verify_email(
+    payload: VerifyEmailRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+) -> dict:
+    """Verify email address using a one-time token from email."""
+    check_auth_rate_limit(request, settings)
+    message = AuthService(db, settings).verify_email(token=payload.token)
+    return success_response(
+        data=MessageResponseData(message=message).model_dump(mode="json"),
+        request_id=request.state.request_id,
+    )
+
+
+@router.post("/resend-verification")
+def resend_verification(
+    request: Request,
+    auth_user: AuthenticatedUser = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+) -> dict:
+    """Resend email verification link to the authenticated user."""
+    check_auth_rate_limit(request, settings)
+    message = AuthService(db, settings).resend_verification(auth_user=auth_user)
+    return success_response(
+        data=MessageResponseData(message=message).model_dump(mode="json"),
         request_id=request.state.request_id,
         tenant_id=auth_user.tenant_id,
     )

@@ -8,10 +8,26 @@ import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
 
+from app.core.config import get_settings
 from app.core.constants import TENANT_SLUG_HEADER
 from app.core.database import session_scope
 from app.core.security import hash_password
+from app.main import create_app
 from tests.helpers.rbac import provision_tenant_with_role
+
+
+def _register_payload(suffix: str | None = None) -> dict:
+    token = suffix or uuid.uuid4().hex[:8]
+    return {
+        "name": f"Test Clinic {token}",
+        "slug": f"test-clinic-{token}",
+        "email": f"owner-{token}@example.com",
+        "owner_first_name": "Owner",
+        "owner_last_name": "User",
+        "owner_password": "SecurePass@123",
+        "accept_terms": True,
+        "accept_privacy_policy": True,
+    }
 
 
 @pytest.fixture
@@ -52,6 +68,8 @@ def test_register_tenant_creates_hospital_resources(client: TestClient) -> None:
         "owner_first_name": "Owner",
         "owner_last_name": "User",
         "owner_password": "SecurePass@123",
+        "accept_terms": True,
+        "accept_privacy_policy": True,
     }
     resp = client.post("/api/v1/platform/register", json=payload)
     assert resp.status_code == status.HTTP_201_CREATED
@@ -79,6 +97,13 @@ def test_register_tenant_creates_hospital_resources(client: TestClient) -> None:
     keys = {s["setting_key"] for s in settings.json()["data"]}
     assert "onboarding_progress" in keys
     assert "clinical" in keys
+    assert "billing" in keys
+    assert "system" in keys
+
+    settings_by_key = {s["setting_key"]: s["setting_value"] for s in settings.json()["data"]}
+    assert settings_by_key["clinical"]["mrn_prefix"] == "MRN"
+    assert settings_by_key["billing"]["tax_rate"] == 18.0
+    assert settings_by_key["system"]["date_format"] == "DD/MM/YYYY"
 
 
 def test_update_hospital_profile(client: TestClient, hospital_admin_user: dict) -> None:
@@ -118,6 +143,58 @@ def test_create_and_update_location(client: TestClient, hospital_admin_user: dic
     assert update.json()["data"]["phone"] == "+91-1111111111"
 
 
+def test_duplicate_location_code_returns_conflict(client: TestClient, hospital_admin_user: dict) -> None:
+    headers = _auth_headers(client, hospital_admin_user["slug"], hospital_admin_user["email"])
+    payload = {"name": "West Wing", "code": "WEST", "city": "Delhi"}
+
+    first = client.post("/api/v1/hospital/locations", json=payload, headers=headers)
+    assert first.status_code == status.HTTP_201_CREATED
+
+    second = client.post("/api/v1/hospital/locations", json=payload, headers=headers)
+    assert second.status_code == status.HTTP_409_CONFLICT
+
+
+def test_bulk_update_system_config_settings(client: TestClient, hospital_admin_user: dict) -> None:
+    """FR-ADM-004: tax rate, MRN prefix, and date format are tenant-configurable."""
+    headers = _auth_headers(client, hospital_admin_user["slug"], hospital_admin_user["email"])
+
+    profile = client.patch(
+        "/api/v1/hospital/profile",
+        json={"currency": "USD"},
+        headers=headers,
+    )
+    assert profile.status_code == status.HTTP_200_OK
+    assert profile.json()["data"]["currency"] == "USD"
+
+    settings = client.patch(
+        "/api/v1/hospital/settings",
+        json={
+            "settings": {
+                "billing": {"tax_rate": 5.0, "tax_inclusive_pricing": True},
+                "clinical": {"mrn_prefix": "APOLLO"},
+                "system": {"date_format": "YYYY-MM-DD"},
+            }
+        },
+        headers=headers,
+    )
+    assert settings.status_code == status.HTTP_200_OK
+    updated = {item["setting_key"]: item["setting_value"] for item in settings.json()["data"]}
+    assert updated["billing"]["tax_rate"] == 5.0
+    assert updated["clinical"]["mrn_prefix"] == "APOLLO"
+    assert updated["system"]["date_format"] == "YYYY-MM-DD"
+
+
+def test_upsert_single_setting(client: TestClient, hospital_admin_user: dict) -> None:
+    headers = _auth_headers(client, hospital_admin_user["slug"], hospital_admin_user["email"])
+    resp = client.put(
+        "/api/v1/hospital/settings/billing",
+        json={"setting_value": {"tax_rate": 12.0, "invoice_prefix": "INV"}},
+        headers=headers,
+    )
+    assert resp.status_code == status.HTTP_200_OK
+    assert resp.json()["data"]["setting_value"]["tax_rate"] == 12.0
+
+
 def test_duplicate_slug_registration_fails(client: TestClient) -> None:
     suffix = uuid.uuid4().hex[:8]
     slug = f"dup-{suffix}"
@@ -128,6 +205,8 @@ def test_duplicate_slug_registration_fails(client: TestClient) -> None:
         "owner_first_name": "A",
         "owner_last_name": "B",
         "owner_password": "SecurePass@123",
+        "accept_terms": True,
+        "accept_privacy_policy": True,
     }
     first = client.post("/api/v1/platform/register", json=payload)
     assert first.status_code == status.HTTP_201_CREATED
@@ -135,3 +214,42 @@ def test_duplicate_slug_registration_fails(client: TestClient) -> None:
     payload["email"] = f"dup2-{suffix}@example.com"
     second = client.post("/api/v1/platform/register", json=payload)
     assert second.status_code == status.HTTP_409_CONFLICT
+
+
+def test_register_requires_captcha_when_enforced(monkeypatch: pytest.MonkeyPatch) -> None:
+    """MVP-028: registration rejects missing CAPTCHA when bypass is disabled."""
+    monkeypatch.setenv("CAPTCHA_BYPASS", "false")
+    monkeypatch.setenv("HCAPTCHA_SECRET_KEY", "test-secret")
+    get_settings.cache_clear()
+    cfg = get_settings()
+    cfg.skip_startup_checks = True
+
+    with TestClient(create_app(cfg)) as isolated_client:
+        resp = isolated_client.post("/api/v1/platform/register", json=_register_payload())
+    assert resp.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+    assert resp.json()["errors"][0]["field"] == "captcha_token"
+
+
+def test_register_verifies_captcha_server_side(monkeypatch: pytest.MonkeyPatch) -> None:
+    """MVP-028: registration succeeds when hCaptcha siteverify returns success."""
+    from unittest.mock import MagicMock, patch
+
+    monkeypatch.setenv("CAPTCHA_BYPASS", "false")
+    monkeypatch.setenv("HCAPTCHA_SECRET_KEY", "test-secret")
+    get_settings.cache_clear()
+    cfg = get_settings()
+    cfg.skip_startup_checks = True
+
+    payload = _register_payload()
+    payload["captcha_token"] = "valid-captcha-token"
+
+    mock_response = MagicMock()
+    mock_response.json.return_value = {"success": True}
+    mock_response.raise_for_status = MagicMock()
+
+    with patch("app.adapters.captcha.hcaptcha.httpx.post", return_value=mock_response):
+        with TestClient(create_app(cfg)) as isolated_client:
+            resp = isolated_client.post("/api/v1/platform/register", json=payload)
+
+    assert resp.status_code == status.HTTP_201_CREATED
+    assert resp.json()["data"]["tenant"]["slug"] == payload["slug"]
