@@ -35,6 +35,13 @@ CORE_AUTH_RLS_TABLES: tuple[str, ...] = (
     "email_verification_tokens",
 )
 
+CORE_ORG_RLS_TABLES: tuple[str, ...] = (
+    "departments",
+    "staff",
+    "doctors",
+    "doctor_schedules",
+)
+
 TENANT_ISOLATION_USING = (
     "tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::uuid"
 )

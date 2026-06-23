@@ -6,7 +6,13 @@ import { RoleRedirect } from "@/components/auth/RoleRedirect";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { AuthLayout } from "@/components/layout/AuthLayout";
 import { BranchesPage } from "@/pages/admin/BranchesPage";
+import { DepartmentsPage } from "@/pages/admin/DepartmentsPage";
+import { DoctorFormPage } from "@/pages/admin/DoctorFormPage";
+import { DoctorSchedulePage } from "@/pages/admin/DoctorSchedulePage";
+import { DoctorsPage } from "@/pages/admin/DoctorsPage";
 import { HospitalSettingsPage } from "@/pages/admin/HospitalSettingsPage";
+import { StaffFormPage } from "@/pages/admin/StaffFormPage";
+import { StaffPage } from "@/pages/admin/StaffPage";
 import { UserDetailPage } from "@/pages/admin/UserDetailPage";
 import { UsersPage } from "@/pages/admin/UsersPage";
 import { DashboardPage } from "@/pages/DashboardPage";
@@ -169,6 +175,70 @@ export const router = createBrowserRouter([
         element: (
           <PermissionRoute permission="admin:settings">
             <BranchesPage />
+          </PermissionRoute>
+        ),
+      },
+      {
+        path: "admin/departments",
+        element: (
+          <PermissionRoute permission="admin:departments">
+            <DepartmentsPage />
+          </PermissionRoute>
+        ),
+      },
+      {
+        path: "admin/staff",
+        element: (
+          <PermissionRoute permission="admin:staff">
+            <StaffPage />
+          </PermissionRoute>
+        ),
+      },
+      {
+        path: "admin/staff/new",
+        element: (
+          <PermissionRoute permission="admin:staff">
+            <StaffFormPage />
+          </PermissionRoute>
+        ),
+      },
+      {
+        path: "admin/staff/:staffId",
+        element: (
+          <PermissionRoute permission="admin:staff">
+            <StaffFormPage />
+          </PermissionRoute>
+        ),
+      },
+      {
+        path: "admin/doctors",
+        element: (
+          <PermissionRoute permission="admin:doctors">
+            <DoctorsPage />
+          </PermissionRoute>
+        ),
+      },
+      {
+        path: "admin/doctors/new",
+        element: (
+          <PermissionRoute permission="admin:doctors">
+            <DoctorFormPage />
+          </PermissionRoute>
+        ),
+      },
+      {
+        path: "admin/doctors/:doctorId/schedule",
+        element: (
+          <PermissionRoute permission="admin:doctors">
+            <DoctorSchedulePage />
+          </PermissionRoute>
+        ),
+      },
+      {
+        path: "admin/doctors/:doctorId",
+        element: (
+          <PermissionRoute permission="admin:doctors">
+            <DoctorFormPage />
           </PermissionRoute>
         ),
       },

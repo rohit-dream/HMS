@@ -40,6 +40,8 @@ def test_receptionist_has_opd_queue() -> None:
 def test_hospital_admin_has_admin_staff_and_opd_queue() -> None:
     perms = ROLE_PERMISSION_MAP["hospital_admin"]
     assert "admin:staff" in perms
+    assert "admin:departments" in perms
+    assert "admin:doctors" in perms
     assert "opd:queue" in perms
 
 

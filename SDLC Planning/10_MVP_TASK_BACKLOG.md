@@ -83,29 +83,29 @@
 
 | ID | Task | Hrs | Status |
 |----|------|-----|--------|
-| MVP-051 | API_DESIGN_OPD.md complete spec | 8 | ❌ |
-| MVP-052 | OPD OpenAPI router stubs | 4 | ❌ |
-| MVP-053 | Audit write service (uses S3 table) | 4 | ❌ |
-| MVP-054 | Mutation audit middleware | 3 | ❌ |
-| MVP-055 | Composite FK migration checklist | 2 | ❌ |
-| MVP-056 | Shared UI components | 8 | ❌ |
-| MVP-057 | OpenAPI snapshot test | 2 | ❌ |
-| MVP-058 | Update stale planning docs | 2 | ❌ |
+| MVP-051 | API_DESIGN_OPD.md complete spec | 8 | ✅ |
+| MVP-052 | OPD OpenAPI router stubs | 4 | ✅ |
+| MVP-053 | Audit write service (uses S3 table) | 4 | ✅ |
+| MVP-054 | Mutation audit middleware | 3 | ✅ |
+| MVP-055 | Composite FK migration checklist | 2 | ✅ |
+| MVP-056 | Shared UI components | 8 | ✅ |
+| MVP-057 | OpenAPI snapshot test | 2 | ✅ |
+| MVP-058 | Update stale planning docs | 2 | ✅ |
 
 ## Sprint 6 — Org Structure (MVP-059 – MVP-068)
 
 | ID | Task | Hrs | Status |
 |----|------|-----|--------|
-| MVP-059 | Alembic 005 org tables + RLS | 3 | ❌ |
-| MVP-060 | Departments API | 3 | ❌ |
-| MVP-061 | Staff API | 4 | ❌ |
-| MVP-062 | Doctors API | 4 | ❌ |
-| MVP-063 | Doctor schedules API | 4 | ❌ |
-| MVP-064 | Departments UI | 3 | ❌ |
-| MVP-065 | Staff UI | 5 | ❌ |
-| MVP-066 | Doctors + schedule UI | 6 | ❌ |
-| MVP-067 | Org integration tests | 4 | ❌ |
-| MVP-068 | Org isolation tests | 2 | ❌ |
+| MVP-059 | Alembic 005 org tables + RLS | 3 | ✅ |
+| MVP-060 | Departments API | 3 | ✅ |
+| MVP-061 | Staff API | 4 | ✅ |
+| MVP-062 | Doctors API | 4 | ✅ |
+| MVP-063 | Doctor schedules API | 4 | ✅ |
+| MVP-064 | Departments UI | 3 | ✅ |
+| MVP-065 | Staff UI | 5 | ✅ |
+| MVP-066 | Doctors + schedule UI | 6 | ✅ |
+| MVP-067 | Org integration tests | 4 | ✅ |
+| MVP-068 | Org isolation tests | 2 | ✅ |
 
 ## Sprint 7 — Patients (MVP-069 – MVP-082)
 

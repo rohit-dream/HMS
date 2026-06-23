@@ -7,6 +7,9 @@ const navItems = [
   { label: "Billing", to: "/billing/collection", permission: "billing:read" as const },
   { label: "Settings", to: "/admin/settings", permission: "admin:settings" as const },
   { label: "Branches", to: "/admin/branches", permission: "admin:settings" as const },
+  { label: "Departments", to: "/admin/departments", permission: "admin:departments" as const },
+  { label: "Staff", to: "/admin/staff", permission: "admin:staff" as const },
+  { label: "Doctors", to: "/admin/doctors", permission: "admin:doctors" as const },
   { label: "Users", to: "/admin/users", permission: "admin:users" as const },
 ];
 

@@ -60,6 +60,8 @@ PERMISSION_CATALOG: tuple[tuple[str, str, str], ...] = (
     # Admin
     ("admin:users", "Manage Users", "admin"),
     ("admin:staff", "Manage Staff", "admin"),
+    ("admin:departments", "Manage Departments", "admin"),
+    ("admin:doctors", "Manage Doctors", "admin"),
     ("admin:settings", "Manage Settings", "admin"),
     ("admin:subscription", "Manage Subscription", "admin"),
     ("admin:impersonate", "Support Impersonation", "admin"),
@@ -122,6 +124,8 @@ ROLE_PERMISSION_MAP: dict[str, frozenset[str]] = {
             "laboratory:delete",
             "admin:users",
             "admin:staff",
+            "admin:departments",
+            "admin:doctors",
             "admin:settings",
             "audit:read",
             "reports:clinical",
