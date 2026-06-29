@@ -1,6 +1,7 @@
 import { get, post, postNoContent } from "@/api/client";
 import { setTenantSlug } from "@/api/auth-session";
 import type {
+  AcceptInvitePayload,
   ForgotPasswordPayload,
   LoginCredentials,
   LoginResponse,
@@ -70,4 +71,11 @@ export async function verifyEmailRequest(token: string): Promise<MessageResponse
 
 export async function resendVerificationRequest(): Promise<MessageResponse> {
   return post<MessageResponse>("/auth/resend-verification");
+}
+
+export async function acceptInviteRequest(payload: AcceptInvitePayload): Promise<LoginResponse> {
+  return post<LoginResponse>("/auth/accept-invite", {
+    invite_token: payload.inviteToken,
+    password: payload.password,
+  });
 }

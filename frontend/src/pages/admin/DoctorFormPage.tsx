@@ -17,7 +17,9 @@ import type { Department } from "@/api/types/departments";
 import type { Doctor } from "@/api/types/doctors";
 import type { StaffMember } from "@/api/types/staff";
 import { FormField } from "@/components/forms/FormField";
+import { AdminPageFrame, FormHelpCard, FormPageLayout, FormSection } from "@/components/enterprise";
 import { Button, useToast } from "@/components/ui";
+import { Alert } from "@/components/ui/Alert";
 
 const doctorBaseSchema = z.object({
   staff_id: z.string().optional(),
@@ -209,12 +211,9 @@ export function DoctorFormPage() {
 
   if (!isNew && !doctorQuery.isLoading && !doctorQuery.data) {
     return (
-      <div className="space-y-4">
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-error">Doctor not found.</p>
-        <Link to="/admin/doctors" className="text-sm text-primary hover:underline">
-          Back to doctors
-        </Link>
-      </div>
+      <AdminPageFrame title="Doctor not found" description="The requested physician profile does not exist.">
+        <Alert variant="error">Doctor not found.</Alert>
+      </AdminPageFrame>
     );
   }
 
@@ -222,74 +221,80 @@ export function DoctorFormPage() {
   const saving = createMutation.isPending || updateMutation.isPending;
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
-      <div>
-        <Link to="/admin/doctors" className="text-sm text-primary hover:underline">
-          ← Back to doctors
-        </Link>
-        <h2 className="mt-2 text-2xl font-semibold text-slate-900">
-          {isNew ? "Add doctor" : "Edit doctor"}
-        </h2>
-        {!isNew && doctorQuery.data && (
-          <p className="mt-1 text-sm text-muted">
-            {doctorQuery.data.first_name} {doctorQuery.data.last_name} ·{" "}
-            {doctorQuery.data.employee_code}
-          </p>
-        )}
-      </div>
-
-      <form
-        className="grid gap-4 rounded-lg border border-border bg-white p-6 sm:grid-cols-2"
-        onSubmit={form.handleSubmit(onSubmit)}
-      >
-        {isNew ? (
-          <StaffField control={form.control} staff={eligibleStaff} />
-        ) : null}
-        <FormField name="specialization" control={form.control} label="Specialization" />
-        <FormField name="registration_number" control={form.control} label="Registration no." />
-        <FormField name="qualification" control={form.control} label="Qualification" />
-        <FormField
-          name="consultation_fee"
-          control={form.control}
-          label="Consultation fee"
-          type="number"
-        />
-        <FormField name="follow_up_fee" control={form.control} label="Follow-up fee" type="number" />
-        <DepartmentField control={form.control} departments={departments} />
-        <AvailabilityField control={form.control} />
-        <FormField
-          name="bio"
-          control={form.control}
-          label="Bio"
-          as="textarea"
-          className="sm:col-span-2"
-        />
-
-        <div className="flex flex-wrap gap-2 sm:col-span-2">
-          <Button type="submit" disabled={saving}>
-            {saving ? "Saving…" : isNew ? "Create doctor" : "Save changes"}
-          </Button>
-          {!isNew && (
+    <AdminPageFrame
+      title={isNew ? "Register physician" : "Physician profile"}
+      description={
+        !isNew && doctorQuery.data
+          ? `${doctorQuery.data.first_name} ${doctorQuery.data.last_name} · ${doctorQuery.data.employee_code}`
+          : "Link an active staff member and configure clinical credentials and fees."
+      }
+      actions={
+        !isNew ? (
+          <Link
+            to={`/admin/doctors/${doctorId}/schedule`}
+            className="inline-flex items-center justify-center rounded-lg border border-border bg-card px-4 py-2.5 text-sm font-medium text-foreground transition-all duration-200 hover:border-primary/40 hover:bg-hover"
+          >
+            Manage schedule
+          </Link>
+        ) : undefined
+      }
+    >
+      <form onSubmit={form.handleSubmit(onSubmit)}>
+        <FormPageLayout
+          sidebar={
             <>
-              <Link
-                to={`/admin/doctors/${doctorId}/schedule`}
-                className="inline-flex items-center justify-center rounded-lg border border-border bg-white px-4 py-2 text-sm font-medium text-slate-900 hover:bg-surface"
-              >
-                Manage schedule
-              </Link>
-              <Button
-                type="button"
-                variant="danger"
-                disabled={deleteMutation.isPending}
-                onClick={handleDelete}
-              >
-                {deleteMutation.isPending ? "Removing…" : "Remove doctor"}
-              </Button>
+              <FormHelpCard title="Clinical profile">
+                <p>Doctors must be linked to an existing active staff record.</p>
+                <p>Consultation fees are used by billing modules in later sprints.</p>
+              </FormHelpCard>
+              {!isNew && (
+                <FormHelpCard title="Remove profile">
+                  <p>Removing a doctor profile does not delete the underlying staff record.</p>
+                  <Button
+                    type="button"
+                    variant="danger"
+                    className="mt-3 w-full"
+                    disabled={deleteMutation.isPending}
+                    onClick={handleDelete}
+                  >
+                    {deleteMutation.isPending ? "Removing…" : "Remove doctor profile"}
+                  </Button>
+                </FormHelpCard>
+              )}
             </>
+          }
+        >
+          {isNew && (
+            <FormSection title="Staff linkage" description="Select the employee record for this physician" columns={1}>
+              <StaffField control={form.control} staff={eligibleStaff} />
+            </FormSection>
           )}
-        </div>
+
+          <FormSection title="Credentials" description="Medical registration and specialization">
+            <FormField name="specialization" control={form.control} label="Specialization" />
+            <FormField name="registration_number" control={form.control} label="Registration no." />
+            <FormField name="qualification" control={form.control} label="Qualification" />
+            <DepartmentField control={form.control} departments={departments} />
+          </FormSection>
+
+          <FormSection title="Consultation fees" description="Fee configuration for outpatient billing">
+            <FormField name="consultation_fee" control={form.control} label="Consultation fee" type="number" />
+            <FormField name="follow_up_fee" control={form.control} label="Follow-up fee" type="number" />
+            <AvailabilityField control={form.control} />
+          </FormSection>
+
+          <FormSection title="Profile notes" columns={1}>
+            <FormField name="bio" control={form.control} label="Physician bio" as="textarea" />
+          </FormSection>
+
+          <div className="flex flex-wrap gap-2 border-t border-border-light pt-6">
+            <Button type="submit" disabled={saving}>
+              {saving ? "Saving…" : isNew ? "Create doctor profile" : "Save changes"}
+            </Button>
+          </div>
+        </FormPageLayout>
       </form>
-    </div>
+    </AdminPageFrame>
   );
 }
 

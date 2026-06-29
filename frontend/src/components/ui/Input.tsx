@@ -2,8 +2,7 @@ import { forwardRef, type InputHTMLAttributes, type SelectHTMLAttributes } from 
 import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
-const fieldClassName =
-  "w-full rounded-lg border border-border px-3 py-2 outline-none ring-primary focus:ring-2 disabled:cursor-not-allowed disabled:opacity-60";
+const fieldClassName = "glass-input";
 
 export const inputClassName = fieldClassName;
 
@@ -19,7 +18,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
     <div className="space-y-1">
       <input
         ref={ref}
-        className={cn(fieldClassName, error && "border-error ring-error", className)}
+        className={cn(fieldClassName, error && "border-error ring-2 ring-error/20", className)}
         aria-invalid={error ? true : undefined}
         {...props}
       />
@@ -40,7 +39,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select
     <div className="space-y-1">
       <select
         ref={ref}
-        className={cn(fieldClassName, error && "border-error ring-error", className)}
+        className={cn(fieldClassName, error && "border-error ring-2 ring-error/20", className)}
         aria-invalid={error ? true : undefined}
         {...props}
       >
@@ -51,8 +50,8 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select
   );
 });
 
-export const labelClassName = "block space-y-1 text-sm";
-export const labelTextClassName = "font-medium text-slate-700";
+export const labelClassName = "block space-y-1.5 text-sm";
+export const labelTextClassName = "font-medium text-foreground";
 
 export interface FieldLabelProps {
   htmlFor?: string;

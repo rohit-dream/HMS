@@ -140,6 +140,8 @@ SUBSCRIPTION_PLAN_CATALOG: tuple[SubscriptionPlanSeed, ...] = (
     ),
 )
 
+TRIAL_PATIENT_LIMIT: int = _starter_features()["limits"]["max_patients_trial"]
+
 SYSTEM_TENANT_SEED = {
     "id": SYSTEM_TENANT_ID,
     "name": "HMS Platform System",

@@ -42,6 +42,27 @@ CORE_ORG_RLS_TABLES: tuple[str, ...] = (
     "doctor_schedules",
 )
 
+CORE_PATIENT_RLS_TABLES: tuple[str, ...] = (
+    "patients",
+    "patient_allergies",
+    "patient_contacts",
+    "patient_documents",
+)
+
+CLINICAL_APPOINTMENT_RLS_TABLES: tuple[str, ...] = (
+    "appointments",
+)
+
+CLINICAL_OPD_RLS_TABLES: tuple[str, ...] = (
+    "opd_visits",
+    "opd_queue",
+    "opd_vitals",
+    "opd_clinical_notes",
+    "opd_prescriptions",
+    "opd_prescription_items",
+    "opd_referrals",
+)
+
 TENANT_ISOLATION_USING = (
     "tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::uuid"
 )

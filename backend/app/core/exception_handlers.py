@@ -9,6 +9,7 @@ from app.core.exceptions import (
     AccountLockedError,
     AppError,
     ConflictError,
+    FeatureNotImplementedError,
     ForbiddenError,
     NotFoundError,
     PlanLimitError,
@@ -30,6 +31,7 @@ _STATUS_MAP: dict[type[AppError], int] = {
     AccountLockedError: 423,
     TenantSuspendedError: 403,
     RateLimitExceededError: 429,
+    FeatureNotImplementedError: 501,
 }
 
 

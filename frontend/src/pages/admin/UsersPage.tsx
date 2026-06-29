@@ -1,199 +1,234 @@
+import { zodResolver } from "@hookform/resolvers/zod";
 import { FormEvent, useState } from "react";
+import { useForm } from "react-hook-form";
 import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { z } from "zod";
+import { UserPlus, Users } from "lucide-react";
 import { inviteUserRequest, searchUsersRequest } from "@/api/endpoints/admin-users";
 import { ApiError } from "@/api/errors";
 import {
-  alertErrorClassName,
-  alertSuccessClassName,
-  inputClassName,
-  labelClassName,
-  labelTextClassName,
-  primaryButtonClassName,
-} from "@/components/auth/auth-styles";
+  AdminPageFrame,
+  DataGridShell,
+  DataToolbar,
+  EmptyState,
+  PaginationBar,
+} from "@/components/enterprise";
+import { FormField } from "@/components/forms/FormField";
+import { Badge } from "@/components/ui/Badge";
+import { Button, Modal, useToast } from "@/components/ui";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeaderCell,
+  TableLoading,
+  TableRow,
+} from "@/components/ui/Table";
 import { TENANT_ROLE_OPTIONS } from "@/lib/admin-constants";
+
+const inviteUserSchema = z.object({
+  first_name: z.string().trim().min(1, "First name is required"),
+  last_name: z.string().trim().min(1, "Last name is required"),
+  email: z.string().trim().email("Enter a valid email"),
+  role_code: z.string().min(1, "Role is required"),
+});
+
+type InviteUserForm = z.infer<typeof inviteUserSchema>;
+const PAGE_SIZE = 20;
+
+function userStatusVariant(status: string): "success" | "warning" | "error" | "neutral" {
+  if (status === "active") return "success";
+  if (status === "invited") return "warning";
+  if (status === "disabled") return "error";
+  return "neutral";
+}
 
 export function UsersPage() {
   const queryClient = useQueryClient();
+  const toast = useToast();
   const [search, setSearch] = useState("");
   const [query, setQuery] = useState("");
-  const [showInvite, setShowInvite] = useState(false);
-
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [email, setEmail] = useState("");
-  const [roleCode, setRoleCode] = useState("receptionist");
-
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteToken, setInviteToken] = useState<string | null>(null);
 
+  const inviteForm = useForm<InviteUserForm>({
+    resolver: zodResolver(inviteUserSchema),
+    defaultValues: {
+      first_name: "",
+      last_name: "",
+      email: "",
+      role_code: "receptionist",
+    },
+  });
+
   const usersQuery = useQuery({
-    queryKey: ["admin", "users", query],
-    queryFn: () => searchUsersRequest({ q: query || undefined, page: 1, page_size: 50 }),
+    queryKey: ["admin", "users", query, page],
+    queryFn: () => searchUsersRequest({ q: query || undefined, page, page_size: PAGE_SIZE }),
   });
 
   const inviteMutation = useMutation({
     mutationFn: inviteUserRequest,
     onSuccess: async (data) => {
       await queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
-      setShowInvite(false);
-      setFirstName("");
-      setLastName("");
-      setEmail("");
+      setInviteOpen(false);
+      inviteForm.reset();
       setInviteToken(data.invite_token);
-      setSuccess(`Invitation sent to ${data.email}.`);
-      setError(null);
+      toast.success(`Invitation sent to ${data.email}.`);
     },
     onError: (err) => {
       setInviteToken(null);
-      setSuccess(null);
-      setError(err instanceof ApiError ? err.message : "Failed to invite user.");
+      toast.error(err instanceof ApiError ? err.message : "Failed to invite user.");
     },
   });
 
   function handleSearch(event: FormEvent) {
     event.preventDefault();
     setQuery(search.trim());
+    setPage(1);
   }
 
-  function handleInvite(event: FormEvent) {
-    event.preventDefault();
-    setError(null);
-    setSuccess(null);
+  function onInvite(values: InviteUserForm) {
     setInviteToken(null);
     inviteMutation.mutate({
-      email: email.trim().toLowerCase(),
-      first_name: firstName.trim(),
-      last_name: lastName.trim(),
-      role_codes: roleCode ? [roleCode] : [],
+      email: values.email.trim().toLowerCase(),
+      first_name: values.first_name.trim(),
+      last_name: values.last_name.trim(),
+      role_codes: values.role_code ? [values.role_code] : [],
     });
   }
 
   const users = usersQuery.data?.data ?? [];
+  const pagination = usersQuery.data?.pagination;
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-semibold text-slate-900">Users</h2>
-          <p className="mt-1 text-sm text-muted">Invite staff and manage tenant user accounts.</p>
-        </div>
-        <button
-          type="button"
-          onClick={() => setShowInvite((open) => !open)}
-          className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90"
-        >
-          {showInvite ? "Cancel invite" : "Invite user"}
-        </button>
-      </div>
-
-      {error && <p className={alertErrorClassName}>{error}</p>}
-      {success && <p className={alertSuccessClassName}>{success}</p>}
+    <AdminPageFrame
+      title="Users & access control"
+      description="Invite hospital staff, assign roles, and manage tenant user accounts."
+      actions={
+        <Button type="button" onClick={() => setInviteOpen(true)}>
+          <UserPlus className="mr-2 h-4 w-4" />
+          Invite user
+        </Button>
+      }
+    >
       {inviteToken && (
-        <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
-          Dev invite token: <code className="font-mono text-xs">{inviteToken}</code>
+        <p className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-warning">
+          Development invite token: <code className="font-mono text-xs">{inviteToken}</code>
         </p>
       )}
 
-      {showInvite && (
-        <form className="grid gap-4 rounded-lg border border-border bg-white p-6 sm:grid-cols-2" onSubmit={handleInvite}>
-          <h3 className="sm:col-span-2 text-lg font-medium text-slate-900">Invite user</h3>
-          <label className={labelClassName}>
-            <span className={labelTextClassName}>First name</span>
-            <input className={inputClassName} value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
-          </label>
-          <label className={labelClassName}>
-            <span className={labelTextClassName}>Last name</span>
-            <input className={inputClassName} value={lastName} onChange={(e) => setLastName(e.target.value)} required />
-          </label>
-          <label className={labelClassName}>
-            <span className={labelTextClassName}>Email</span>
-            <input
-              type="email"
-              className={inputClassName}
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </label>
-          <label className={labelClassName}>
-            <span className={labelTextClassName}>Role</span>
-            <select className={inputClassName} value={roleCode} onChange={(e) => setRoleCode(e.target.value)}>
+      <Modal
+        open={inviteOpen}
+        title="Invite hospital user"
+        onClose={() => setInviteOpen(false)}
+        footer={
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="secondary" onClick={() => setInviteOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" form="invite-user-form" disabled={inviteMutation.isPending}>
+              {inviteMutation.isPending ? "Sending invite…" : "Send invitation"}
+            </Button>
+          </div>
+        }
+      >
+        <form id="invite-user-form" className="space-y-6" onSubmit={inviteForm.handleSubmit(onInvite)}>
+          <p className="text-sm text-muted">
+            The invited user will receive credentials to access modules based on their assigned role.
+          </p>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <FormField name="first_name" control={inviteForm.control} label="First name" />
+            <FormField name="last_name" control={inviteForm.control} label="Last name" />
+            <FormField name="email" control={inviteForm.control} label="Work email" type="email" className="sm:col-span-2" />
+            <FormField name="role_code" control={inviteForm.control} label="Role" as="select" className="sm:col-span-2">
               {TENANT_ROLE_OPTIONS.map((role) => (
                 <option key={role.code} value={role.code}>
                   {role.label}
                 </option>
               ))}
-            </select>
-          </label>
-          <div className="sm:col-span-2">
-            <button type="submit" disabled={inviteMutation.isPending} className={primaryButtonClassName}>
-              {inviteMutation.isPending ? "Sending invite…" : "Send invitation"}
-            </button>
+            </FormField>
           </div>
         </form>
-      )}
+      </Modal>
 
-      <form className="flex gap-2" onSubmit={handleSearch}>
-        <input
-          className={inputClassName}
-          placeholder="Search by name or email"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-        <button
-          type="submit"
-          className="shrink-0 rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-surface"
-        >
-          Search
-        </button>
-      </form>
+      <DataToolbar
+        searchValue={search}
+        onSearchChange={setSearch}
+        onSearchSubmit={handleSearch}
+        searchPlaceholder="Search by name or email"
+      />
 
-      <div className="overflow-hidden rounded-lg border border-border bg-white">
-        <table className="min-w-full text-sm">
-          <thead className="border-b border-border bg-surface/60 text-left">
-            <tr>
-              <th className="px-4 py-3 font-medium">Name</th>
-              <th className="px-4 py-3 font-medium">Email</th>
-              <th className="px-4 py-3 font-medium">Status</th>
-              <th className="px-4 py-3 font-medium">Roles</th>
-              <th className="px-4 py-3 font-medium" />
-            </tr>
-          </thead>
-          <tbody>
-            {usersQuery.isLoading && (
-              <tr>
-                <td colSpan={5} className="px-4 py-6 text-muted">
-                  Loading users…
-                </td>
-              </tr>
+      <DataGridShell
+        footer={
+          pagination && pagination.total_items > 0 ? (
+            <PaginationBar pagination={pagination} onPageChange={setPage} />
+          ) : undefined
+        }
+      >
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableHeaderCell>User</TableHeaderCell>
+              <TableHeaderCell>Email</TableHeaderCell>
+              <TableHeaderCell>Status</TableHeaderCell>
+              <TableHeaderCell>Roles</TableHeaderCell>
+              <TableHeaderCell className="text-right">Actions</TableHeaderCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {usersQuery.isLoading && <TableLoading colSpan={5}>Loading users…</TableLoading>}
+            {!usersQuery.isLoading && users.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={5} className="p-0">
+                  <EmptyState
+                    icon={Users}
+                    title="No users match your search"
+                    description="Invite administrators, receptionists, and clinical staff to collaborate on this hospital tenant."
+                    action={
+                      <Button type="button" onClick={() => setInviteOpen(true)}>
+                        Invite user
+                      </Button>
+                    }
+                  />
+                </TableCell>
+              </TableRow>
             )}
             {users.map((user) => (
-              <tr key={user.id} className="border-b border-border last:border-0">
-                <td className="px-4 py-3">
+              <TableRow key={user.id}>
+                <TableCell className="font-medium">
                   {user.first_name} {user.last_name}
-                </td>
-                <td className="px-4 py-3">{user.email}</td>
-                <td className="px-4 py-3 capitalize">{user.status}</td>
-                <td className="px-4 py-3">{user.roles.join(", ") || "—"}</td>
-                <td className="px-4 py-3 text-right">
-                  <Link to={`/admin/users/${user.id}`} className="text-primary hover:underline">
-                    View
+                </TableCell>
+                <TableCell>{user.email}</TableCell>
+                <TableCell>
+                  <Badge variant={userStatusVariant(user.status)} className="capitalize">
+                    {user.status}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  <div className="flex flex-wrap gap-1">
+                    {user.roles.length === 0 && "—"}
+                    {user.roles.map((role) => (
+                      <Badge key={role} variant="neutral">
+                        {role}
+                      </Badge>
+                    ))}
+                  </div>
+                </TableCell>
+                <TableCell className="text-right">
+                  <Link to={`/admin/users/${user.id}`}>
+                    <Button type="button" variant="ghost" size="sm">
+                      Manage
+                    </Button>
                   </Link>
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ))}
-            {!usersQuery.isLoading && users.length === 0 && (
-              <tr>
-                <td colSpan={5} className="px-4 py-6 text-muted">
-                  No users found.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-    </div>
+          </TableBody>
+        </Table>
+      </DataGridShell>
+    </AdminPageFrame>
   );
 }

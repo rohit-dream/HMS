@@ -6,6 +6,8 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { CheckCircle2, Info, X, XCircle } from "lucide-react";
 import { cn } from "@/lib/cn";
 
 export type ToastVariant = "success" | "error" | "info";
@@ -26,38 +28,50 @@ interface ToastContextValue {
 const ToastContext = createContext<ToastContextValue | null>(null);
 
 const variantClasses: Record<ToastVariant, string> = {
-  success: "border-green-200 bg-green-50 text-success",
+  success: "border-emerald-200 bg-emerald-50 text-success",
   error: "border-red-200 bg-red-50 text-error",
-  info: "border-border bg-white text-slate-900",
+  info: "border-border-light bg-card text-foreground",
+};
+
+const variantIcons: Record<ToastVariant, typeof Info> = {
+  success: CheckCircle2,
+  error: XCircle,
+  info: Info,
 };
 
 function ToastViewport({ messages, onDismiss }: { messages: ToastMessage[]; onDismiss: (id: string) => void }) {
-  if (messages.length === 0) return null;
-
   return (
     <div className="pointer-events-none fixed bottom-4 right-4 z-[60] flex w-full max-w-sm flex-col gap-2">
-      {messages.map((message) => (
-        <div
-          key={message.id}
-          role="status"
-          className={cn(
-            "pointer-events-auto rounded-lg border px-4 py-3 text-sm shadow-md",
-            variantClasses[message.variant],
-          )}
-        >
-          <div className="flex items-start justify-between gap-3">
-            <p>{message.title}</p>
-            <button
-              type="button"
-              className="text-xs opacity-70 hover:opacity-100"
-              onClick={() => onDismiss(message.id)}
-              aria-label="Dismiss notification"
+      <AnimatePresence>
+        {messages.map((message) => {
+          const Icon = variantIcons[message.variant];
+          return (
+            <motion.div
+              key={message.id}
+              role="status"
+              initial={{ opacity: 0, x: 24, scale: 0.96 }}
+              animate={{ opacity: 1, x: 0, scale: 1 }}
+              exit={{ opacity: 0, x: 24, scale: 0.96 }}
+              transition={{ duration: 0.25 }}
+              className={cn(
+                "pointer-events-auto flex items-start gap-3 rounded-lg border px-4 py-3 text-sm shadow-card-md",
+                variantClasses[message.variant],
+              )}
             >
-              ×
-            </button>
-          </div>
-        </div>
-      ))}
+              <Icon className="mt-0.5 h-4 w-4 shrink-0 opacity-80" aria-hidden />
+              <p className="flex-1">{message.title}</p>
+              <button
+                type="button"
+                className="rounded-md p-0.5 opacity-70 transition-opacity hover:opacity-100"
+                onClick={() => onDismiss(message.id)}
+                aria-label="Dismiss notification"
+              >
+                <X className="h-3.5 w-3.5" aria-hidden />
+              </button>
+            </motion.div>
+          );
+        })}
+      </AnimatePresence>
     </div>
   );
 }

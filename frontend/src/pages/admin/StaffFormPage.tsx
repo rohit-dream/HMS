@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import { listDepartmentsRequest } from "@/api/endpoints/departments";
@@ -17,7 +17,9 @@ import type { Department } from "@/api/types/departments";
 import type { HospitalLocation } from "@/api/types/hospital";
 import type { StaffMember } from "@/api/types/staff";
 import { FormField } from "@/components/forms/FormField";
+import { AdminPageFrame, FormHelpCard, FormPageLayout, FormSection } from "@/components/enterprise";
 import { Button, useToast } from "@/components/ui";
+import { Alert } from "@/components/ui/Alert";
 
 const staffSchema = z.object({
   employee_code: z.string().trim().min(1, "Employee code is required"),
@@ -202,12 +204,9 @@ export function StaffFormPage() {
 
   if (!isNew && !staffQuery.isLoading && !staffQuery.data) {
     return (
-      <div className="space-y-4">
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-error">Staff member not found.</p>
-        <Link to="/admin/staff" className="text-sm text-primary hover:underline">
-          Back to staff
-        </Link>
-      </div>
+      <AdminPageFrame title="Staff member not found" description="The requested employee record does not exist.">
+        <Alert variant="error">Staff member not found.</Alert>
+      </AdminPageFrame>
     );
   }
 
@@ -216,52 +215,70 @@ export function StaffFormPage() {
   const saving = createMutation.isPending || updateMutation.isPending;
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
-      <div>
-        <Link to="/admin/staff" className="text-sm text-primary hover:underline">
-          ← Back to staff
-        </Link>
-        <h2 className="mt-2 text-2xl font-semibold text-slate-900">
-          {isNew ? "Add staff member" : "Edit staff member"}
-        </h2>
-        {!isNew && staffQuery.data?.is_doctor && (
-          <p className="mt-1 text-sm text-muted">This employee has a linked doctor profile.</p>
-        )}
-      </div>
+    <AdminPageFrame
+      title={isNew ? "Add staff member" : "Edit staff member"}
+      description={
+        !isNew && staffQuery.data?.is_doctor
+          ? "This employee has a linked doctor profile."
+          : "Capture employment details, department assignment, and lifecycle status."
+      }
+    >
+      <form onSubmit={form.handleSubmit(onSubmit)}>
+        <FormPageLayout
+          sidebar={
+            <>
+              <FormHelpCard title="Employment guidelines">
+                <p>Employee codes must be unique across the hospital tenant.</p>
+                <p>Terminated staff retain records for audit purposes.</p>
+              </FormHelpCard>
+              {!isNew && (
+                <FormHelpCard title="Danger zone">
+                  <p>Termination revokes active employment status.</p>
+                  <Button
+                    type="button"
+                    variant="danger"
+                    className="mt-3 w-full"
+                    disabled={deleteMutation.isPending || staffQuery.data?.status === "terminated"}
+                    onClick={handleTerminate}
+                  >
+                    {deleteMutation.isPending ? "Terminating…" : "Terminate employee"}
+                  </Button>
+                </FormHelpCard>
+              )}
+            </>
+          }
+        >
+          <FormSection title="Identity" description="Basic employee identification">
+            <FormField name="employee_code" control={form.control} label="Employee code" />
+            <FormField name="designation" control={form.control} label="Designation" />
+            <FormField name="first_name" control={form.control} label="First name" />
+            <FormField name="last_name" control={form.control} label="Last name" />
+          </FormSection>
 
-      <form
-        className="grid gap-4 rounded-lg border border-border bg-white p-6 sm:grid-cols-2"
-        onSubmit={form.handleSubmit(onSubmit)}
-      >
-        <FormField name="employee_code" control={form.control} label="Employee code" />
-        <FormField name="designation" control={form.control} label="Designation" />
-        <FormField name="first_name" control={form.control} label="First name" />
-        <FormField name="last_name" control={form.control} label="Last name" />
-        <FormField name="email" control={form.control} label="Email" type="email" />
-        <FormField name="phone" control={form.control} label="Phone" />
-        <DepartmentField control={form.control} departments={departments} />
-        <LocationField control={form.control} locations={locations} />
-        <FormField name="joining_date" control={form.control} label="Joining date" type="date" />
-        <FormField name="leaving_date" control={form.control} label="Leaving date" type="date" />
-        <StatusField control={form.control} />
+          <FormSection title="Contact" description="Work communication details">
+            <FormField name="email" control={form.control} label="Email" type="email" />
+            <FormField name="phone" control={form.control} label="Phone" />
+          </FormSection>
 
-        <div className="flex flex-wrap gap-2 sm:col-span-2">
-          <Button type="submit" disabled={saving}>
-            {saving ? "Saving…" : isNew ? "Create staff member" : "Save changes"}
-          </Button>
-          {!isNew && (
-            <Button
-              type="button"
-              variant="danger"
-              disabled={deleteMutation.isPending || staffQuery.data?.status === "terminated"}
-              onClick={handleTerminate}
-            >
-              {deleteMutation.isPending ? "Terminating…" : "Terminate"}
+          <FormSection title="Organization" description="Department and branch assignment">
+            <DepartmentField control={form.control} departments={departments} />
+            <LocationField control={form.control} locations={locations} />
+          </FormSection>
+
+          <FormSection title="Employment" description="Dates and employment status">
+            <FormField name="joining_date" control={form.control} label="Joining date" type="date" />
+            <FormField name="leaving_date" control={form.control} label="Leaving date" type="date" />
+            <StatusField control={form.control} />
+          </FormSection>
+
+          <div className="flex flex-wrap gap-2 border-t border-border-light pt-6">
+            <Button type="submit" disabled={saving}>
+              {saving ? "Saving…" : isNew ? "Create staff member" : "Save changes"}
             </Button>
-          )}
-        </div>
+          </div>
+        </FormPageLayout>
       </form>
-    </div>
+    </AdminPageFrame>
   );
 }
 

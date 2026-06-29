@@ -42,8 +42,15 @@ class ValidationError(AppError):
 
 
 class PlanLimitError(AppError):
-    def __init__(self, message: str = "Plan limit exceeded", field: str | None = None) -> None:
-        super().__init__(message, code="plan_limit_exceeded", field=field)
+    def __init__(
+        self,
+        message: str = "Plan limit exceeded",
+        *,
+        resource: str | None = None,
+        field: str | None = None,
+    ) -> None:
+        code = f"plan_limit_{resource}" if resource else "plan_limit_exceeded"
+        super().__init__(message, code=code, field=field or resource)
 
 
 class AccountLockedError(AppError):
@@ -59,3 +66,8 @@ class TenantSuspendedError(AppError):
 class RateLimitExceededError(AppError):
     def __init__(self, message: str = "Too many requests", field: str | None = None) -> None:
         super().__init__(message, code="rate_limit_exceeded", field=field)
+
+
+class FeatureNotImplementedError(AppError):
+    def __init__(self, message: str = "Not implemented", field: str | None = None) -> None:
+        super().__init__(message, code="not_implemented", field=field)

@@ -2,6 +2,79 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  @apply bg-surface text-slate-900 antialiased;
+@layer base {
+  html {
+    @apply scroll-smooth;
+  }
+
+  body {
+    @apply min-h-screen bg-surface font-sans text-foreground antialiased;
+  }
+
+  #root {
+    @apply min-h-screen;
+  }
+}
+
+@layer components {
+  /* Enterprise card surfaces (kept class names for compatibility) */
+  .glass-panel {
+    @apply rounded-xl border border-border-light bg-card shadow-card;
+  }
+
+  .glass-panel-strong {
+    @apply rounded-xl border border-border-light bg-card shadow-card;
+  }
+
+  .glass-panel-hover {
+    @apply transition-all duration-200 hover:border-border hover:bg-hover hover:shadow-card-md;
+  }
+
+  .glass-sidebar {
+    @apply border-r border-gray-800 bg-sidebar;
+  }
+
+  .glass-header {
+    @apply border-b border-border-light bg-card shadow-card;
+  }
+
+  .glass-input {
+    @apply w-full rounded-lg border border-border bg-card px-3 py-2.5 text-sm text-foreground outline-none transition-all duration-200 placeholder:text-muted focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-surface disabled:opacity-60;
+  }
+
+  .glass-textarea {
+    @apply glass-input resize-y;
+  }
+
+  .glass-nav-link {
+    @apply flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-text transition-all duration-200 hover:bg-sidebar-active hover:text-white;
+  }
+
+  .glass-nav-link-active {
+    @apply bg-sidebar-active text-white;
+  }
+
+  .page-shell {
+    @apply mx-auto w-full max-w-7xl space-y-6 animate-fade-in;
+  }
+
+  .auth-shell {
+    @apply space-y-6 animate-fade-in;
+  }
+
+  .form-card {
+    @apply rounded-xl border border-border-light bg-card p-6 shadow-card;
+  }
+
+  .section-title {
+    @apply text-lg font-semibold text-foreground;
+  }
+
+  .text-link {
+    @apply text-sm text-primary transition-colors duration-200 hover:text-primary/80 hover:underline;
+  }
+
+  .kpi-card {
+    @apply rounded-xl border border-border-light bg-card p-5 shadow-card transition-all duration-200 hover:border-border hover:shadow-card-md;
+  }
 }

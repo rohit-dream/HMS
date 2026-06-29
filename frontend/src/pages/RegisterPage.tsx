@@ -5,10 +5,12 @@ import type { LegalVersions } from "@/api/types/platform";
 import { ApiError } from "@/api/errors";
 import {
   alertErrorClassName,
+  authLinkClassName,
   inputClassName,
   labelClassName,
   labelTextClassName,
   primaryButtonClassName,
+  secondaryButtonClassName,
 } from "@/components/auth/auth-styles";
 
 const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -159,8 +161,30 @@ export function RegisterPage() {
   return (
     <div className="space-y-6">
       <div className="text-center">
+        <div className="mx-auto mb-4 flex max-w-md items-center justify-center gap-2">
+          {[1, 2, 3].map((stepNumber) => (
+            <div key={stepNumber} className="flex flex-1 items-center gap-2">
+              <div
+                className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold ${
+                  stepNumber <= step
+                    ? "bg-primary text-white shadow-card"
+                    : "border border-border bg-card text-muted"
+                }`}
+              >
+                {stepNumber}
+              </div>
+              {stepNumber < 3 && (
+                <div
+                  className={`h-0.5 flex-1 rounded-full ${
+                    stepNumber < step ? "bg-primary" : "bg-border-light"
+                  }`}
+                />
+              )}
+            </div>
+          ))}
+        </div>
         <p className="text-xs font-medium uppercase tracking-wide text-muted">Step {step} of 3</p>
-        <h1 className="mt-1 text-2xl font-semibold text-slate-900">Register your hospital</h1>
+        <h1 className="mt-1 text-2xl font-semibold text-foreground">Register your hospital</h1>
         <p className="mt-1 text-sm text-muted">{stepTitle}</p>
       </div>
 
@@ -282,7 +306,7 @@ export function RegisterPage() {
         )}
 
         {step === 3 && (
-          <div className="space-y-4 rounded-lg border border-border bg-surface/40 p-4 text-sm">
+          <div className="space-y-4 rounded-lg border border-border-light bg-surface p-4 text-sm">
             {legalError && <p className={alertErrorClassName}>{legalError}</p>}
             {legal && (
               <p className="text-muted">
@@ -299,7 +323,7 @@ export function RegisterPage() {
               />
               <span>
                 I accept the{" "}
-                <Link to="/legal/terms" className="text-primary hover:underline" target="_blank">
+                <Link to="/legal/terms" className={authLinkClassName} target="_blank">
                   Terms of Service
                 </Link>
               </span>
@@ -314,7 +338,7 @@ export function RegisterPage() {
               />
               <span>
                 I accept the{" "}
-                <Link to="/legal/privacy" className="text-primary hover:underline" target="_blank">
+                <Link to="/legal/privacy" className={authLinkClassName} target="_blank">
                   Privacy Policy
                 </Link>
               </span>
@@ -337,7 +361,7 @@ export function RegisterPage() {
                 setError(null);
                 setStep((current) => (current - 1) as WizardStep);
               }}
-              className="w-full rounded-lg border border-border px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-surface disabled:opacity-60"
+              className={secondaryButtonClassName}
             >
               Back
             </button>
@@ -350,7 +374,7 @@ export function RegisterPage() {
 
       <p className="text-center text-xs text-muted">
         Already have an account?{" "}
-        <Link to="/login" className="text-primary hover:underline">
+        <Link to="/login" className={authLinkClassName}>
           Sign in
         </Link>
       </p>

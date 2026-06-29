@@ -217,3 +217,7 @@ export async function getPaginated<T>(
 export async function postNoContent(url: string, config?: AxiosRequestConfig): Promise<void> {
   await apiClient.post(url, undefined, config);
 }
+
+export async function deleteNoContent(url: string, config?: AxiosRequestConfig): Promise<void> {
+  await apiClient.delete(url, config);
+}

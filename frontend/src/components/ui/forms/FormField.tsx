@@ -53,7 +53,7 @@ export function FormField<T extends FieldValues>(props: FormFieldProps<T>) {
         const fieldId = String(name);
 
         return (
-          <div className={cn("space-y-1", className)}>
+          <div className={cn("space-y-1.5", className)}>
             <FieldLabel htmlFor={fieldId} label={label} />
             {description && <p className="text-xs text-muted">{description}</p>}
             {fieldAs === "select" ? (
@@ -72,8 +72,8 @@ export function FormField<T extends FieldValues>(props: FormFieldProps<T>) {
                 rows={"rows" in props ? props.rows ?? 3 : 3}
                 placeholder={"placeholder" in props ? props.placeholder : undefined}
                 className={cn(
-                  "w-full rounded-lg border border-border px-3 py-2 outline-none ring-primary focus:ring-2",
-                  error && "border-error",
+                  "glass-textarea",
+                  error && "border-error/50 ring-2 ring-error/30",
                 )}
                 aria-invalid={error ? true : undefined}
                 {...field}

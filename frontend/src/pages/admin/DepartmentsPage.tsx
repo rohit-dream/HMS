@@ -15,14 +15,19 @@ import type { Department } from "@/api/types/departments";
 import type { HospitalLocation } from "@/api/types/hospital";
 import { FormField } from "@/components/forms/FormField";
 import {
+  AdminPageFrame,
+  DataGridShell,
+  DataToolbar,
+  FormSection,
+} from "@/components/enterprise";
+import { GlassCard } from "@/components/ui/GlassCard";
+import { Badge } from "@/components/ui/Badge";
+import {
   Button,
-  Input,
   Modal,
   Table,
   TableBody,
   TableCell,
-  TableContainer,
-  TableEmpty,
   TableHead,
   TableHeaderCell,
   TableLoading,
@@ -169,91 +174,92 @@ export function DepartmentsPage() {
   const departments = departmentsQuery.data?.data ?? [];
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-semibold text-slate-900">Departments</h2>
-        <p className="mt-1 text-sm text-muted">
-          Organize clinical and administrative units across your hospital branches.
-        </p>
-      </div>
+    <AdminPageFrame
+      title="Department structure"
+      description="Define clinical and administrative units mapped to hospital branches."
+    >
+      <div className="grid gap-6 xl:grid-cols-12">
+        <div className="space-y-4 xl:col-span-8">
+          <DataToolbar
+            searchValue={search}
+            onSearchChange={setSearch}
+            onSearchSubmit={handleSearch}
+            searchPlaceholder="Search by name or code"
+          />
 
-      <form
-        className="grid gap-4 rounded-lg border border-border bg-white p-6 sm:grid-cols-2"
-        onSubmit={createForm.handleSubmit(onCreate)}
-      >
-        <h3 className="sm:col-span-2 text-lg font-medium text-slate-900">Add department</h3>
-        <FormField name="name" control={createForm.control} label="Name" />
-        <FormField
-          name="code"
-          control={createForm.control}
-          label="Code"
-          description="2–20 uppercase letters or numbers"
-        />
-        <LocationField control={createForm.control} locations={locations} />
-        <StatusField control={createForm.control} />
-        <div className="sm:col-span-2">
-          <Button type="submit" fullWidth disabled={createMutation.isPending}>
-            {createMutation.isPending ? "Creating…" : "Create department"}
-          </Button>
+          <DataGridShell>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableHeaderCell>Department</TableHeaderCell>
+                  <TableHeaderCell>Code</TableHeaderCell>
+                  <TableHeaderCell>Branch</TableHeaderCell>
+                  <TableHeaderCell>Status</TableHeaderCell>
+                  <TableHeaderCell className="text-right">Actions</TableHeaderCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {departmentsQuery.isLoading && (
+                  <TableLoading colSpan={5}>Loading departments…</TableLoading>
+                )}
+                {departments.map((department) => (
+                  <TableRow key={department.id}>
+                    <TableCell className="font-medium">{department.name}</TableCell>
+                    <TableCell className="font-mono text-xs">{department.code}</TableCell>
+                    <TableCell>
+                      {department.location_id
+                        ? (locationById.get(department.location_id)?.name ?? "—")
+                        : "—"}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={department.is_active ? "success" : "neutral"}>
+                        {department.is_active ? "Active" : "Inactive"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setEditing(department)}
+                      >
+                        Edit
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {!departmentsQuery.isLoading && departments.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={5} className="py-12 text-center text-muted">
+                      No departments found. Create your first department using the panel on the right.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </DataGridShell>
         </div>
-      </form>
 
-      <form className="flex gap-2" onSubmit={handleSearch}>
-        <Input
-          placeholder="Search by name or code"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-        <Button type="submit" variant="secondary" className="shrink-0">
-          Search
-        </Button>
-      </form>
-
-      <TableContainer>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableHeaderCell>Name</TableHeaderCell>
-              <TableHeaderCell>Code</TableHeaderCell>
-              <TableHeaderCell>Branch</TableHeaderCell>
-              <TableHeaderCell>Status</TableHeaderCell>
-              <TableHeaderCell />
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {departmentsQuery.isLoading && (
-              <TableLoading colSpan={5}>Loading departments…</TableLoading>
-            )}
-            {departments.map((department) => (
-              <TableRow key={department.id}>
-                <TableCell>{department.name}</TableCell>
-                <TableCell className="font-mono text-xs">{department.code}</TableCell>
-                <TableCell>
-                  {department.location_id
-                    ? (locationById.get(department.location_id)?.name ?? "—")
-                    : "—"}
-                </TableCell>
-                <TableCell className="capitalize">
-                  {department.is_active ? "active" : "inactive"}
-                </TableCell>
-                <TableCell className="text-right">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setEditing(department)}
-                  >
-                    Edit
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-            {!departmentsQuery.isLoading && departments.length === 0 && (
-              <TableEmpty colSpan={5}>No departments found.</TableEmpty>
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
+        <GlassCard strong className="h-fit xl:col-span-4">
+          <form className="space-y-6" onSubmit={createForm.handleSubmit(onCreate)}>
+            <FormSection title="New department" description="Departments organize staff, doctors, and reporting.">
+              <FormField name="name" control={createForm.control} label="Department name" className="md:col-span-2" />
+              <FormField
+                name="code"
+                control={createForm.control}
+                label="Short code"
+                description="2–20 uppercase letters or numbers"
+                className="md:col-span-2"
+              />
+              <LocationField control={createForm.control} locations={locations} />
+              <StatusField control={createForm.control} />
+            </FormSection>
+            <Button type="submit" fullWidth disabled={createMutation.isPending}>
+              {createMutation.isPending ? "Creating…" : "Create department"}
+            </Button>
+          </form>
+        </GlassCard>
+      </div>
 
       <Modal
         open={Boolean(editing)}
@@ -296,7 +302,7 @@ export function DepartmentsPage() {
           <StatusField control={editForm.control} />
         </form>
       </Modal>
-    </div>
+    </AdminPageFrame>
   );
 }
 

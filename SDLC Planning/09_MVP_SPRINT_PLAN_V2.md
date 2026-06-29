@@ -450,11 +450,11 @@ This plan **replaces** `03_SPRINT_PLAN_DETAILED.md` v1. It fixes every gap ident
 
 ## Definition of Done
 
-- [ ] OPD API fully specified (≥15 endpoints documented)
-- [ ] OpenAPI published and accurate for auth, hospital, admin, patients stub
-- [ ] Audit write service callable from any domain service
-- [ ] Shared UI components used in admin screens
-- [ ] Stale planning docs updated
+- [x] OPD API fully specified (≥15 endpoints documented)
+- [x] OpenAPI published and accurate for auth, hospital, admin, patients stub
+- [x] Audit write service callable from any domain service
+- [x] Shared UI components used in admin screens
+- [x] Stale planning docs updated
 
 ---
 

@@ -1,21 +1,26 @@
 import { FormEvent, useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { UserPlus, Users } from "lucide-react";
 import { listStaffRequest } from "@/api/endpoints/staff";
 import {
-  Button,
-  Input,
-  Select,
+  AdminPageFrame,
+  DataGridShell,
+  DataToolbar,
+  EmptyState,
+  PaginationBar,
+} from "@/components/enterprise";
+import { Badge } from "@/components/ui/Badge";
+import { Button, primaryLinkClassName, Select } from "@/components/ui";
+import {
   Table,
   TableBody,
   TableCell,
-  TableContainer,
-  TableEmpty,
   TableHead,
   TableHeaderCell,
   TableLoading,
   TableRow,
-} from "@/components/ui";
+} from "@/components/ui/Table";
 
 const STATUS_OPTIONS = [
   { value: "", label: "All statuses" },
@@ -24,115 +29,144 @@ const STATUS_OPTIONS = [
   { value: "terminated", label: "Terminated" },
 ];
 
+const PAGE_SIZE = 20;
+
+function statusVariant(status: string): "success" | "warning" | "error" | "neutral" {
+  if (status === "active") return "success";
+  if (status === "on_leave") return "warning";
+  if (status === "terminated") return "error";
+  return "neutral";
+}
+
 export function StaffPage() {
   const [search, setSearch] = useState("");
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("");
+  const [page, setPage] = useState(1);
 
   const staffQuery = useQuery({
-    queryKey: ["admin", "staff", query, status],
+    queryKey: ["admin", "staff", query, status, page],
     queryFn: () =>
       listStaffRequest({
         search: query || undefined,
         status: status || undefined,
-        page: 1,
-        page_size: 100,
+        page,
+        page_size: PAGE_SIZE,
       }),
   });
 
   function handleSearch(event: FormEvent) {
     event.preventDefault();
     setQuery(search.trim());
+    setPage(1);
   }
 
   const staff = staffQuery.data?.data ?? [];
+  const pagination = staffQuery.data?.pagination;
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-semibold text-slate-900">Staff</h2>
-          <p className="mt-1 text-sm text-muted">
-            Manage hospital employees, departments, and employment status.
-          </p>
-        </div>
-        <Link
-          to="/admin/staff/new"
-          className="inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90"
-        >
+    <AdminPageFrame
+      title="Staff directory"
+      description="Manage hospital employees, departments, designations, and employment lifecycle."
+      actions={
+        <Link to="/admin/staff/new" className={primaryLinkClassName}>
+          <UserPlus className="mr-2 h-4 w-4" />
           Add staff member
         </Link>
-      </div>
+      }
+    >
+      <DataToolbar
+        searchValue={search}
+        onSearchChange={setSearch}
+        onSearchSubmit={handleSearch}
+        searchPlaceholder="Search name, email, or employee code"
+        filters={
+          <Select
+            className="w-44"
+            value={status}
+            onChange={(event) => {
+              setStatus(event.target.value);
+              setPage(1);
+            }}
+            aria-label="Filter by status"
+          >
+            {STATUS_OPTIONS.map((option) => (
+              <option key={option.value || "all"} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </Select>
+        }
+      />
 
-      <div className="flex flex-wrap gap-2">
-        <form className="flex min-w-[16rem] flex-1 gap-2" onSubmit={handleSearch}>
-          <Input
-            placeholder="Search name, email, or employee code"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-          <Button type="submit" variant="secondary" className="shrink-0">
-            Search
-          </Button>
-        </form>
-        <Select
-          className="w-40"
-          value={status}
-          onChange={(e) => setStatus(e.target.value)}
-          aria-label="Filter by status"
-        >
-          {STATUS_OPTIONS.map((option) => (
-            <option key={option.value || "all"} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </Select>
-      </div>
-
-      <TableContainer>
+      <DataGridShell
+        footer={
+          pagination && pagination.total_items > 0 ? (
+            <PaginationBar pagination={pagination} onPageChange={setPage} />
+          ) : undefined
+        }
+      >
         <Table>
           <TableHead>
             <TableRow>
+              <TableHeaderCell>Employee</TableHeaderCell>
               <TableHeaderCell>Code</TableHeaderCell>
-              <TableHeaderCell>Name</TableHeaderCell>
               <TableHeaderCell>Department</TableHeaderCell>
               <TableHeaderCell>Designation</TableHeaderCell>
               <TableHeaderCell>Status</TableHeaderCell>
-              <TableHeaderCell />
+              <TableHeaderCell className="text-right">Actions</TableHeaderCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {staffQuery.isLoading && <TableLoading colSpan={6}>Loading staff…</TableLoading>}
+            {staffQuery.isLoading && <TableLoading colSpan={6}>Loading staff directory…</TableLoading>}
+            {!staffQuery.isLoading && staff.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={6} className="p-0">
+                  <EmptyState
+                    icon={Users}
+                    title="No staff members found"
+                    description="Adjust your search filters or add your first employee to build the hospital roster."
+                    action={
+                      <Link to="/admin/staff/new" className={primaryLinkClassName}>
+                        Add staff member
+                      </Link>
+                    }
+                  />
+                </TableCell>
+              </TableRow>
+            )}
             {staff.map((member) => (
               <TableRow key={member.id}>
-                <TableCell className="font-mono text-xs">{member.employee_code}</TableCell>
                 <TableCell>
-                  {member.first_name} {member.last_name}
+                  <div className="font-medium text-foreground">
+                    {member.first_name} {member.last_name}
+                  </div>
                   {member.is_doctor && (
-                    <span className="ml-2 rounded bg-primary/10 px-2 py-0.5 text-xs text-primary">
-                      Doctor
-                    </span>
+                    <Badge variant="info" className="mt-1">
+                      Doctor profile
+                    </Badge>
                   )}
                 </TableCell>
+                <TableCell className="font-mono text-xs">{member.employee_code}</TableCell>
                 <TableCell>{member.department_name ?? "—"}</TableCell>
                 <TableCell>{member.designation ?? "—"}</TableCell>
-                <TableCell className="capitalize">{member.status.replace("_", " ")}</TableCell>
+                <TableCell>
+                  <Badge variant={statusVariant(member.status)} className="capitalize">
+                    {member.status.replace("_", " ")}
+                  </Badge>
+                </TableCell>
                 <TableCell className="text-right">
-                  <Link
-                    to={`/admin/staff/${member.id}`}
-                    className="text-sm text-primary hover:underline"
-                  >
-                    Edit
+                  <Link to={`/admin/staff/${member.id}`}>
+                    <Button type="button" variant="ghost" size="sm">
+                      View / Edit
+                    </Button>
                   </Link>
                 </TableCell>
               </TableRow>
             ))}
-            {!staffQuery.isLoading && staff.length === 0 && (
-              <TableEmpty colSpan={6}>No staff members found.</TableEmpty>
-            )}
           </TableBody>
         </Table>
-      </TableContainer>
-    </div>
+      </DataGridShell>
+    </AdminPageFrame>
   );
 }

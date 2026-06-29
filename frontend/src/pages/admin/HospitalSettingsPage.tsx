@@ -7,14 +7,8 @@ import {
   updateHospitalProfileRequest,
 } from "@/api/endpoints/hospital";
 import { ApiError } from "@/api/errors";
-import {
-  alertErrorClassName,
-  alertSuccessClassName,
-  inputClassName,
-  labelClassName,
-  labelTextClassName,
-  primaryButtonClassName,
-} from "@/components/auth/auth-styles";
+import { AdminPageFrame, FormPageLayout, FormSection } from "@/components/enterprise";
+import { Button, FieldLabel, Input, Select, useToast } from "@/components/ui";
 import { DATE_FORMAT_OPTIONS } from "@/lib/admin-constants";
 
 function settingsMap(settings: { setting_key: string; setting_value: Record<string, unknown> }[]) {
@@ -23,6 +17,7 @@ function settingsMap(settings: { setting_key: string; setting_value: Record<stri
 
 export function HospitalSettingsPage() {
   const queryClient = useQueryClient();
+  const toast = useToast();
   const profileQuery = useQuery({ queryKey: ["hospital", "profile"], queryFn: getHospitalProfileRequest });
   const settingsQuery = useQuery({ queryKey: ["hospital", "settings"], queryFn: listSettingsRequest });
 
@@ -40,9 +35,6 @@ export function HospitalSettingsPage() {
   const [taxInclusive, setTaxInclusive] = useState(false);
   const [mrnPrefix, setMrnPrefix] = useState("MRN");
   const [dateFormat, setDateFormat] = useState<string>("DD/MM/YYYY");
-
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
 
   useEffect(() => {
     if (!profileQuery.data) return;
@@ -74,12 +66,10 @@ export function HospitalSettingsPage() {
     mutationFn: updateHospitalProfileRequest,
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["hospital", "profile"] });
-      setSuccess("Hospital profile saved.");
-      setError(null);
+      toast.success("Hospital profile saved.");
     },
     onError: (err) => {
-      setSuccess(null);
-      setError(err instanceof ApiError ? err.message : "Failed to save profile.");
+      toast.error(err instanceof ApiError ? err.message : "Failed to save profile.");
     },
   });
 
@@ -87,12 +77,10 @@ export function HospitalSettingsPage() {
     mutationFn: bulkUpdateSettingsRequest,
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["hospital", "settings"] });
-      setSuccess("System configuration saved.");
-      setError(null);
+      toast.success("System configuration saved.");
     },
     onError: (err) => {
-      setSuccess(null);
-      setError(err instanceof ApiError ? err.message : "Failed to save system configuration.");
+      toast.error(err instanceof ApiError ? err.message : "Failed to save system configuration.");
     },
   });
 
@@ -101,8 +89,6 @@ export function HospitalSettingsPage() {
 
   function handleProfileSubmit(event: FormEvent) {
     event.preventDefault();
-    setError(null);
-    setSuccess(null);
     profileMutation.mutate({
       name: name.trim(),
       phone: phone.trim() || undefined,
@@ -118,11 +104,9 @@ export function HospitalSettingsPage() {
 
   function handleSystemSubmit(event: FormEvent) {
     event.preventDefault();
-    setError(null);
-    setSuccess(null);
     const parsedTax = Number.parseFloat(taxRate);
     if (Number.isNaN(parsedTax) || parsedTax < 0) {
-      setError("Tax rate must be a valid non-negative number.");
+      toast.error("Tax rate must be a valid non-negative number.");
       return;
     }
     settingsMutation.mutate({
@@ -139,124 +123,97 @@ export function HospitalSettingsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-8">
-      <div>
-        <h2 className="text-2xl font-semibold text-slate-900">Hospital settings</h2>
-        <p className="mt-1 text-sm text-muted">Organization profile and system configuration (FR-ADM-004).</p>
-      </div>
+    <AdminPageFrame
+      title="Hospital configuration"
+      description="Organization profile, regional settings, and system defaults for your tenant."
+    >
+      <FormPageLayout>
+        <form className="space-y-8" onSubmit={handleProfileSubmit}>
+          <FormSection title="Organization profile" description="Public hospital identity and contact information">
 
-      {error && <p className={alertErrorClassName}>{error}</p>}
-      {success && <p className={alertSuccessClassName}>{success}</p>}
+        <FieldLabel htmlFor="hospital-name" label="Hospital name">
+          <Input id="hospital-name" value={name} onChange={(e) => setName(e.target.value)} required />
+        </FieldLabel>
 
-      <form className="space-y-4 rounded-lg border border-border bg-white p-6" onSubmit={handleProfileSubmit}>
-        <h3 className="text-lg font-medium text-slate-900">Organization profile</h3>
-
-        <label className={labelClassName}>
-          <span className={labelTextClassName}>Hospital name</span>
-          <input className={inputClassName} value={name} onChange={(e) => setName(e.target.value)} required />
-        </label>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <label className={labelClassName}>
-            <span className={labelTextClassName}>Phone</span>
-            <input className={inputClassName} value={phone} onChange={(e) => setPhone(e.target.value)} />
-          </label>
-          <label className={labelClassName}>
-            <span className={labelTextClassName}>Tax registration no.</span>
-            <input
-              className={inputClassName}
+        <div className="grid gap-4 md:grid-cols-2">
+          <FieldLabel htmlFor="hospital-phone" label="Phone">
+            <Input id="hospital-phone" value={phone} onChange={(e) => setPhone(e.target.value)} />
+          </FieldLabel>
+          <FieldLabel htmlFor="hospital-tax" label="Tax registration no.">
+            <Input
+              id="hospital-tax"
               value={taxRegistrationNo}
               onChange={(e) => setTaxRegistrationNo(e.target.value)}
             />
-          </label>
+          </FieldLabel>
         </div>
 
-        <label className={labelClassName}>
-          <span className={labelTextClassName}>Address</span>
-          <input
-            className={inputClassName}
-            value={addressLine1}
-            onChange={(e) => setAddressLine1(e.target.value)}
-          />
-        </label>
+        <FieldLabel htmlFor="hospital-address" label="Address">
+          <Input id="hospital-address" value={addressLine1} onChange={(e) => setAddressLine1(e.target.value)} />
+        </FieldLabel>
 
-        <div className="grid gap-4 sm:grid-cols-3">
-          <label className={labelClassName}>
-            <span className={labelTextClassName}>City</span>
-            <input className={inputClassName} value={city} onChange={(e) => setCity(e.target.value)} />
-          </label>
-          <label className={labelClassName}>
-            <span className={labelTextClassName}>State</span>
-            <input className={inputClassName} value={state} onChange={(e) => setState(e.target.value)} />
-          </label>
-          <label className={labelClassName}>
-            <span className={labelTextClassName}>Postal code</span>
-            <input
-              className={inputClassName}
-              value={postalCode}
-              onChange={(e) => setPostalCode(e.target.value)}
-            />
-          </label>
+        <div className="grid gap-4 md:grid-cols-3">
+          <FieldLabel htmlFor="hospital-city" label="City">
+            <Input id="hospital-city" value={city} onChange={(e) => setCity(e.target.value)} />
+          </FieldLabel>
+          <FieldLabel htmlFor="hospital-state" label="State">
+            <Input id="hospital-state" value={state} onChange={(e) => setState(e.target.value)} />
+          </FieldLabel>
+          <FieldLabel htmlFor="hospital-postal" label="Postal code">
+            <Input id="hospital-postal" value={postalCode} onChange={(e) => setPostalCode(e.target.value)} />
+          </FieldLabel>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <label className={labelClassName}>
-            <span className={labelTextClassName}>Timezone</span>
-            <input className={inputClassName} value={timezone} onChange={(e) => setTimezone(e.target.value)} />
-          </label>
-          <label className={labelClassName}>
-            <span className={labelTextClassName}>Currency</span>
-            <input
-              className={inputClassName}
+          <FieldLabel htmlFor="hospital-timezone" label="Timezone">
+            <Input id="hospital-timezone" value={timezone} onChange={(e) => setTimezone(e.target.value)} />
+          </FieldLabel>
+          <FieldLabel htmlFor="hospital-currency" label="Currency">
+            <Input
+              id="hospital-currency"
               value={currency}
               maxLength={3}
               onChange={(e) => setCurrency(e.target.value.toUpperCase())}
             />
-          </label>
+          </FieldLabel>
         </div>
+          </FormSection>
 
-        <button type="submit" disabled={isSaving} className={primaryButtonClassName}>
+        <Button type="submit" fullWidth disabled={isSaving}>
           {profileMutation.isPending ? "Saving…" : "Save profile"}
-        </button>
-      </form>
+        </Button>
+        </form>
 
-      <form className="space-y-4 rounded-lg border border-border bg-white p-6" onSubmit={handleSystemSubmit}>
-        <h3 className="text-lg font-medium text-slate-900">System configuration</h3>
+        <form className="space-y-8" onSubmit={handleSystemSubmit}>
+          <FormSection title="System configuration" description="Billing defaults, MRN prefix, and display formats">
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <label className={labelClassName}>
-            <span className={labelTextClassName}>Default tax rate (%)</span>
-            <input
+          <FieldLabel htmlFor="tax-rate" label="Default tax rate (%)">
+            <Input
+              id="tax-rate"
               type="number"
               min={0}
               step={0.01}
-              className={inputClassName}
               value={taxRate}
               onChange={(e) => setTaxRate(e.target.value)}
             />
-          </label>
-          <label className={labelClassName}>
-            <span className={labelTextClassName}>MRN prefix</span>
-            <input className={inputClassName} value={mrnPrefix} onChange={(e) => setMrnPrefix(e.target.value)} />
-          </label>
+          </FieldLabel>
+          <FieldLabel htmlFor="mrn-prefix" label="MRN prefix">
+            <Input id="mrn-prefix" value={mrnPrefix} onChange={(e) => setMrnPrefix(e.target.value)} />
+          </FieldLabel>
         </div>
 
-        <label className={labelClassName}>
-          <span className={labelTextClassName}>Date format</span>
-          <select
-            className={inputClassName}
-            value={dateFormat}
-            onChange={(e) => setDateFormat(e.target.value)}
-          >
+        <FieldLabel htmlFor="date-format" label="Date format">
+          <Select id="date-format" value={dateFormat} onChange={(e) => setDateFormat(e.target.value)}>
             {DATE_FORMAT_OPTIONS.map((option) => (
               <option key={option} value={option}>
                 {option}
               </option>
             ))}
-          </select>
-        </label>
+          </Select>
+        </FieldLabel>
 
-        <label className="flex items-center gap-2 text-sm">
+        <label className="flex items-center gap-2 text-sm text-foreground/90">
           <input
             type="checkbox"
             checked={taxInclusive}
@@ -264,11 +221,13 @@ export function HospitalSettingsPage() {
           />
           Tax-inclusive pricing
         </label>
+          </FormSection>
 
-        <button type="submit" disabled={isSaving} className={primaryButtonClassName}>
+        <Button type="submit" fullWidth disabled={isSaving}>
           {settingsMutation.isPending ? "Saving…" : "Save system configuration"}
-        </button>
-      </form>
-    </div>
+        </Button>
+        </form>
+      </FormPageLayout>
+    </AdminPageFrame>
   );
 }

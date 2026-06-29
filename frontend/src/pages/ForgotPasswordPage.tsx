@@ -5,6 +5,7 @@ import { ApiError } from "@/api/errors";
 import {
   alertErrorClassName,
   alertSuccessClassName,
+  authLinkClassName,
   inputClassName,
   labelClassName,
   labelTextClassName,
@@ -38,7 +39,7 @@ export function ForgotPasswordPage() {
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h1 className="text-2xl font-semibold text-slate-900">Forgot password</h1>
+        <h1 className="text-2xl font-semibold text-foreground">Forgot password</h1>
         <p className="mt-1 text-sm text-muted">
           We will email a reset link if the account exists for your tenant.
         </p>
@@ -85,7 +86,7 @@ export function ForgotPasswordPage() {
       </form>
 
       <p className="text-center text-xs text-muted">
-        <Link to="/login" className="text-primary hover:underline">
+        <Link to="/login" className={authLinkClassName}>
           Back to sign in
         </Link>
       </p>

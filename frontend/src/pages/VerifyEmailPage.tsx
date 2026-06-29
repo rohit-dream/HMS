@@ -5,6 +5,7 @@ import { ApiError } from "@/api/errors";
 import {
   alertErrorClassName,
   alertSuccessClassName,
+  authLinkClassName,
   primaryButtonClassName,
 } from "@/components/auth/auth-styles";
 import { useAuth } from "@/providers/AuthProvider";
@@ -64,7 +65,7 @@ export function VerifyEmailPage() {
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h1 className="text-2xl font-semibold text-slate-900">Verify email</h1>
+        <h1 className="text-2xl font-semibold text-foreground">Verify email</h1>
         <p className="mt-1 text-sm text-muted">
           {token ? "Confirming your email address…" : "Request a new verification link if needed."}
         </p>
@@ -111,14 +112,14 @@ export function VerifyEmailPage() {
       )}
 
       <p className="text-center text-xs text-muted">
-        <Link to="/login" className="text-primary hover:underline">
+        <Link to="/login" className={authLinkClassName}>
           Back to sign in
         </Link>
         {isAuthenticated && (
           <>
             {" "}
             ·{" "}
-            <Link to="/dashboard" className="text-primary hover:underline">
+            <Link to="/dashboard" className={authLinkClassName}>
               Go to dashboard
             </Link>
           </>

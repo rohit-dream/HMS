@@ -4,21 +4,75 @@
 
 | Field | Value |
 |-------|-------|
-| **Document Version** | 1.0 |
-| **Assessment Date** | June 19, 2026 |
+| **Document Version** | 1.1 |
+| **Assessment Date** | June 19, 2026 (initial) · **June 23, 2026** (implementation addendum) |
 | **Reviewer Role** | CTO / Principal Software Architect |
 | **Scope** | PRD.md, DATABASE_DESIGN.md, SYSTEM_ARCHITECTURE.md, MULTI_TENANT_DESIGN.md, RBAC_DESIGN.md, API_DESIGN.md, PROJECT_STRUCTURE.md, IMPLEMENTATION_PLAN.md (+ supporting docs and repo state) |
-| **Implementation State** | Documentation complete; `database/baseline/schema.sql` implemented; backend and frontend not started |
+| **Implementation State (June 2026)** | **Sprints 1–5 complete** — platform, auth, RBAC, hospital admin, OPD API spec/stubs, audit framework, shared UI kit; see addendum below |
+
+---
+
+## Implementation Status Addendum (June 23, 2026)
+
+> **Purpose:** This section supersedes pre-code claims in §§1–9 where they conflict with the current repository. The original June 19 assessment remains as the historical baseline.
+
+### Sprint progress
+
+| Sprint | Theme | Status |
+|--------|-------|--------|
+| 1 | Foundation (Docker, CI, Alembic, health) | ✅ Complete |
+| 2 | Multi-tenant + RLS + Gate G1 | ✅ Complete |
+| 3 | Auth vertical slice (JWT, sessions, frontend auth) | ✅ Complete |
+| 4 | RBAC + hospital admin + Gate G2 | ✅ Complete |
+| 5 | OPD spec, OpenAPI stubs, audit framework, UI kit | ✅ Complete |
+| 6 | Org structure (departments, staff, doctors) | **Next** |
+
+### Repository reality (updated)
+
+| Asset | June 19 state | **Current state** |
+|-------|---------------|-------------------|
+| `backend/` | README only | FastAPI app with platform, auth, hospital, admin, OPD stubs, audit |
+| `frontend/` | README only | React app with auth, admin settings/users/branches, shared `components/ui` |
+| `docker-compose.yml` | Missing | ✅ Present |
+| `.github/workflows/ci.yml` | Missing | ✅ Present (lint, G1, G2, isolation, OpenAPI snapshot, composite FK lint) |
+| Alembic migrations | Not started | ✅ 001–017 applied |
+| `audit.audit_logs` | Not wired | ✅ Migration + login audit + mutation middleware |
+| OPD API spec | Missing | ✅ `docs/API_DESIGN_OPD.md` + OpenAPI stubs |
+| `TESTING_STRATEGY.md` / `DEPLOYMENT_GUIDE.md` | Absent | ✅ Authored (MVP-010) |
+| OpenAPI contract test | Absent | ✅ `tests/snapshots/openapi.json` (MVP-057) |
+| Backend tests | No harness | ✅ **288 tests** collected |
+
+### Revised verdict (June 2026)
+
+**Go for Sprint 6+ feature work.** Foundation, auth, tenancy, RBAC, and hospital admin gates (G1, G2) are passed. Remaining pre-production blockers: patient/clinical vertical slices, billing, AWS deploy, legal review (Gate G5).
+
+### Resolved documentation gaps (since initial report)
+
+| Gap (original §5.1) | Resolution |
+|-----------------------|------------|
+| OPD module API spec | `docs/API_DESIGN_OPD.md` (MVP-051) |
+| `TESTING_STRATEGY.md` | `docs/TESTING_STRATEGY.md` |
+| `DEPLOYMENT_GUIDE.md` | `docs/DEPLOYMENT_GUIDE.md` |
+| UI design system | Minimum shared UI kit in `frontend/src/components/ui/` (MVP-056) |
+| Audit logging not wired | Audit write service + middleware (MVP-053/054) |
+
+### Still open
+
+| Item | Target sprint |
+|------|----------------|
+| IPD API spec | Before IPD sprint |
+| Patient CRUD (beyond stub) | Sprint 7+ |
+| OPD business logic (not 501 stubs) | Sprint 9 |
+| Production deploy + pen test | Sprint 12 / Gate G5 |
+| PRD / legal stakeholder sign-off | Before beta |
 
 ---
 
 ## Executive Summary
 
-This platform has **unusually strong architectural documentation** for a pre-code SaaS: a coherent multi-tenant model, 61-table PostgreSQL design with RLS, RBAC matrices, API conventions, frozen project structure, and a 12-sprint solo-developer execution plan. The **database baseline is production-intent** and ready to drive Alembic migrations.
+Development has progressed through **Sprint 5** (June 2026). Foundation, multi-tenant RLS, auth, RBAC, hospital admin, OPD API specification, audit framework, and a minimum UI kit are implemented with **288 backend tests** and Gates G1/G2 passing. See the **Implementation Status Addendum** above for the current repository state.
 
-Development is **not blocked** for foundation work (Sprint 1), but the project is **not fully ready** for unconstrained feature velocity until cross-document inconsistencies are resolved—especially OPD/IPD API contracts, JWT permission strategy, role naming, and admin API path standards.
-
-**Verdict: Conditional Go** — proceed with Sprint 1 (platform foundation) while completing a short documentation reconciliation gate before Sprint 2 (auth/RBAC).
+The original June 19 assessment below remains as the pre-code baseline. This platform has **unusually strong architectural documentation** for a SaaS product: a coherent multi-tenant model, 61-table PostgreSQL design with RLS, RBAC matrices, API conventions, frozen project structure, and a 12-sprint execution plan.
 
 ---
 
@@ -377,8 +431,8 @@ Per IMPLEMENTATION_PLAN §5.1:
 | Security architecture documented | ✅ |
 | Implementation plan with sprint gates | ✅ |
 | Project structure frozen | ✅ |
-| Application code started | ❌ |
-| Local dev environment runnable | ❌ |
+| Application code started | ✅ Sprints 1–5 |
+| Local dev environment runnable | ✅ `docker compose up` |
 | Stakeholder sign-off on PRD | ❌ |
 | Legal/compliance review | ❌ |
 
@@ -386,7 +440,7 @@ Per IMPLEMENTATION_PLAN §5.1:
 
 | Audience | Guidance |
 |----------|----------|
-| **Engineering** | **Start Sprint 1 immediately.** Scaffold per PROJECT_STRUCTURE; baseline Alembic from `schema.sql`; implement tenant isolation before any feature code. |
+| **Engineering** | **Continue Sprint 6+** per `09_MVP_SPRINT_PLAN_V2.md`. Maintain G1/G2 regression and OpenAPI snapshot on every PR. |
 | **Product** | Amend PRD MVP timeline or formally accept IMPLEMENTATION_PLAN expanded scope (IPD/lab/pharmacy in month 6). |
 | **Security / Compliance** | Schedule legal review parallel to Sprints 1–3; book pen test for Sprint 11–12 window. |
 | **Leadership** | Documentation investment is **above average** for pre-code stage. Risk is **execution capacity** (solo dev) and **contract consistency**, not architectural viability. |
@@ -418,7 +472,20 @@ Per IMPLEMENTATION_PLAN §5.1:
 | PROJECT_STRUCTURE.md | 2.0 | **Frozen** |
 | IMPLEMENTATION_PLAN.md | 1.0 | Active |
 
-## Appendix B: Repository Snapshot (June 19, 2026)
+## Appendix B: Repository Snapshot (June 23, 2026)
+
+| Path | State |
+|------|-------|
+| `database/baseline/schema.sql` | ✅ ~61 tables, RLS |
+| `database/seeds/` | Partial (Alembic seeds for plans, permissions) |
+| `backend/` | ✅ FastAPI — auth, platform, hospital, admin, OPD stubs, audit |
+| `frontend/` | ✅ React — auth flows, admin UI, shared UI components |
+| `docker-compose.yml` | ✅ Postgres 14 + Redis 7 |
+| `infrastructure/terraform/` | ❌ Not scaffolded |
+| `.github/workflows/ci.yml` | ✅ Lint, G1, G2, isolation, OpenAPI snapshot, full pytest |
+| `backend/tests/snapshots/openapi.json` | ✅ Contract snapshot (MVP-057) |
+
+## Appendix C: Repository Snapshot (June 19, 2026 — historical)
 
 | Path | State |
 |------|-------|
@@ -436,6 +503,7 @@ Per IMPLEMENTATION_PLAN §5.1:
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
+| 1.1 | June 23, 2026 | Engineering | Implementation addendum (Sprints 1–5); updated Appendix B snapshot |
 | 1.0 | June 19, 2026 | CTO / Principal Software Architect | Initial development readiness assessment |
 
 ---

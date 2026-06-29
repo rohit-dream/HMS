@@ -105,6 +105,7 @@ class RbacProvisioner:
                     module=module,
                 )
             )
+        self.db.flush()
 
     def _seed_roles(self, tenant_id: uuid.UUID, role_codes: set[str]) -> None:
         for code, name, description in ROLE_CATALOG:

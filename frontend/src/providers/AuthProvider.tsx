@@ -22,6 +22,7 @@ export interface AuthContextValue {
   user: MeResponse | null;
   permissions: string[];
   login: (credentials: LoginCredentials) => Promise<MeResponse>;
+  activateSession: (accessToken: string, tenantSlug?: string) => Promise<MeResponse>;
   logout: () => Promise<void>;
 }
 
@@ -59,6 +60,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return me;
   }, []);
 
+  const activateSession = useCallback(async (token: string, slug?: string) => {
+    if (slug) {
+      setTenantSlug(slug);
+    }
+    setAccessToken(token);
+    const me = await getMeRequest();
+    setUser(me);
+    return me;
+  }, []);
+
   const logout = useCallback(async () => {
     try {
       await logoutRequest();
@@ -75,9 +86,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user,
       permissions: user?.permissions ?? [],
       login,
+      activateSession,
       logout,
     }),
-    [isLoading, login, logout, user],
+    [activateSession, isLoading, login, logout, user],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

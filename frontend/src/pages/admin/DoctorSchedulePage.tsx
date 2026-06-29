@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
-import { Link, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import {
@@ -20,9 +20,12 @@ import {
 } from "@/api/types/doctor-schedules";
 import type { HospitalLocation } from "@/api/types/hospital";
 import { FormField } from "@/components/forms/FormField";
+import { Alert } from "@/components/ui/Alert";
 import {
+  BackLink,
   Button,
   Modal,
+  PageShell,
   Table,
   TableBody,
   TableCell,
@@ -191,31 +194,27 @@ export function DoctorSchedulePage() {
   if (!doctor) {
     return (
       <div className="space-y-4">
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-error">Doctor not found.</p>
-        <Link to="/admin/doctors" className="text-sm text-primary hover:underline">
-          Back to doctors
-        </Link>
+        <Alert variant="error">Doctor not found.</Alert>
+        <BackLink to="/admin/doctors">Back to doctors</BackLink>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <PageShell>
       <div>
-        <Link to={`/admin/doctors/${doctorId}`} className="text-sm text-primary hover:underline">
-          ← Back to doctor profile
-        </Link>
-        <h2 className="mt-2 text-2xl font-semibold text-slate-900">Weekly schedule</h2>
+        <BackLink to={`/admin/doctors/${doctorId}`}>Back to doctor profile</BackLink>
+        <h2 className="mt-3 text-2xl font-semibold text-foreground">Weekly schedule</h2>
         <p className="mt-1 text-sm text-muted">
           {doctor.first_name} {doctor.last_name} · {doctor.specialization}
         </p>
       </div>
 
       <form
-        className="grid gap-4 rounded-lg border border-border bg-white p-6 sm:grid-cols-2"
+        className="form-card grid gap-4 sm:grid-cols-2"
         onSubmit={createForm.handleSubmit((values) => createMutation.mutate(toPayload(values)))}
       >
-        <h3 className="sm:col-span-2 text-lg font-medium text-slate-900">Add schedule slot</h3>
+        <h3 className="section-title sm:col-span-2">Add schedule slot</h3>
         <DayField control={createForm.control} />
         <SlotDurationField control={createForm.control} />
         <FormField name="start_time" control={createForm.control} label="Start time" type="time" />
@@ -343,7 +342,7 @@ export function DoctorSchedulePage() {
           <ActiveField control={editForm.control} />
         </form>
       </Modal>
-    </div>
+    </PageShell>
   );
 }
 

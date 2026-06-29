@@ -1,83 +1,106 @@
 import { FormEvent, useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { Stethoscope, UserRound } from "lucide-react";
 import { listDoctorsRequest } from "@/api/endpoints/doctors";
 import {
-  Button,
-  Input,
+  AdminPageFrame,
+  DataGridShell,
+  DataToolbar,
+  EmptyState,
+  PaginationBar,
+} from "@/components/enterprise";
+import { Badge } from "@/components/ui/Badge";
+import { Button, primaryLinkClassName } from "@/components/ui";
+import {
   Table,
   TableBody,
   TableCell,
-  TableContainer,
-  TableEmpty,
   TableHead,
   TableHeaderCell,
   TableLoading,
   TableRow,
-} from "@/components/ui";
+} from "@/components/ui/Table";
+
+const PAGE_SIZE = 20;
 
 export function DoctorsPage() {
   const [search, setSearch] = useState("");
   const [query, setQuery] = useState("");
+  const [page, setPage] = useState(1);
 
   const doctorsQuery = useQuery({
-    queryKey: ["admin", "doctors", query],
-    queryFn: () => listDoctorsRequest({ search: query || undefined, page: 1, page_size: 100 }),
+    queryKey: ["admin", "doctors", query, page],
+    queryFn: () => listDoctorsRequest({ search: query || undefined, page, page_size: PAGE_SIZE }),
   });
 
   function handleSearch(event: FormEvent) {
     event.preventDefault();
     setQuery(search.trim());
+    setPage(1);
   }
 
   const doctors = doctorsQuery.data?.data ?? [];
+  const pagination = doctorsQuery.data?.pagination;
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-semibold text-slate-900">Doctors</h2>
-          <p className="mt-1 text-sm text-muted">
-            Manage doctor profiles, fees, and weekly availability schedules.
-          </p>
-        </div>
-        <Link
-          to="/admin/doctors/new"
-          className="inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90"
-        >
+    <AdminPageFrame
+      title="Doctor registry"
+      description="Manage physician profiles, consultation fees, availability, and weekly schedules."
+      actions={
+        <Link to="/admin/doctors/new" className={primaryLinkClassName}>
+          <UserRound className="mr-2 h-4 w-4" />
           Add doctor
         </Link>
-      </div>
+      }
+    >
+      <DataToolbar
+        searchValue={search}
+        onSearchChange={setSearch}
+        onSearchSubmit={handleSearch}
+        searchPlaceholder="Search name, specialization, or registration number"
+      />
 
-      <form className="flex gap-2" onSubmit={handleSearch}>
-        <Input
-          placeholder="Search name, specialization, or registration no."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-        <Button type="submit" variant="secondary" className="shrink-0">
-          Search
-        </Button>
-      </form>
-
-      <TableContainer>
+      <DataGridShell
+        footer={
+          pagination && pagination.total_items > 0 ? (
+            <PaginationBar pagination={pagination} onPageChange={setPage} />
+          ) : undefined
+        }
+      >
         <Table>
           <TableHead>
             <TableRow>
-              <TableHeaderCell>Name</TableHeaderCell>
+              <TableHeaderCell>Physician</TableHeaderCell>
               <TableHeaderCell>Specialization</TableHeaderCell>
               <TableHeaderCell>Department</TableHeaderCell>
               <TableHeaderCell>Consultation fee</TableHeaderCell>
-              <TableHeaderCell>Available</TableHeaderCell>
-              <TableHeaderCell />
+              <TableHeaderCell>Availability</TableHeaderCell>
+              <TableHeaderCell className="text-right">Actions</TableHeaderCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {doctorsQuery.isLoading && <TableLoading colSpan={6}>Loading doctors…</TableLoading>}
+            {doctorsQuery.isLoading && <TableLoading colSpan={6}>Loading doctor registry…</TableLoading>}
+            {!doctorsQuery.isLoading && doctors.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={6} className="p-0">
+                  <EmptyState
+                    icon={Stethoscope}
+                    title="No doctors registered"
+                    description="Create doctor profiles linked to staff members and configure schedules for OPD readiness."
+                    action={
+                      <Link to="/admin/doctors/new" className={primaryLinkClassName}>
+                        Add doctor
+                      </Link>
+                    }
+                  />
+                </TableCell>
+              </TableRow>
+            )}
             {doctors.map((doctor) => (
               <TableRow key={doctor.id}>
                 <TableCell>
-                  <div>
+                  <div className="font-medium text-foreground">
                     {doctor.first_name} {doctor.last_name}
                   </div>
                   <div className="font-mono text-xs text-muted">{doctor.employee_code}</div>
@@ -85,29 +108,28 @@ export function DoctorsPage() {
                 <TableCell>{doctor.specialization}</TableCell>
                 <TableCell>{doctor.department_name ?? "—"}</TableCell>
                 <TableCell>{doctor.consultation_fee}</TableCell>
-                <TableCell>{doctor.is_available ? "Yes" : "No"}</TableCell>
-                <TableCell className="space-x-3 text-right">
-                  <Link
-                    to={`/admin/doctors/${doctor.id}`}
-                    className="text-sm text-primary hover:underline"
-                  >
-                    Edit
+                <TableCell>
+                  <Badge variant={doctor.is_available ? "success" : "neutral"}>
+                    {doctor.is_available ? "Available" : "Unavailable"}
+                  </Badge>
+                </TableCell>
+                <TableCell className="space-x-2 text-right">
+                  <Link to={`/admin/doctors/${doctor.id}`}>
+                    <Button type="button" variant="ghost" size="sm">
+                      Profile
+                    </Button>
                   </Link>
-                  <Link
-                    to={`/admin/doctors/${doctor.id}/schedule`}
-                    className="text-sm text-primary hover:underline"
-                  >
-                    Schedule
+                  <Link to={`/admin/doctors/${doctor.id}/schedule`}>
+                    <Button type="button" variant="secondary" size="sm">
+                      Schedule
+                    </Button>
                   </Link>
                 </TableCell>
               </TableRow>
             ))}
-            {!doctorsQuery.isLoading && doctors.length === 0 && (
-              <TableEmpty colSpan={6}>No doctors found.</TableEmpty>
-            )}
           </TableBody>
         </Table>
-      </TableContainer>
-    </div>
+      </DataGridShell>
+    </AdminPageFrame>
   );
 }

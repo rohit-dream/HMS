@@ -52,6 +52,16 @@ jobs:
       - name: Lint
         run: ruff check .
 
+      - name: Composite FK lint (MVP-055)
+        run: python scripts/lint_composite_fks.py
+
+      - name: OpenAPI contract snapshot (MVP-057)
+        env:
+          ENVIRONMENT: test
+          SKIP_STARTUP_CHECKS: "true"
+          REDIS_URL: redis://localhost:6379/0
+        run: pytest tests/unit/test_openapi_snapshot.py -v
+
       - name: Gate G1 verification (Sprint 2)
         env:
           ENVIRONMENT: test
@@ -72,6 +82,13 @@ jobs:
           DATABASE_URL: postgresql://hms:hms@localhost:5432/hms_test
           REDIS_URL: redis://localhost:6379/0
         run: pytest tests/integration/test_gate_g2_e2e.py -v
+
+      - name: Gate G3 verification (Sprint 9)
+        env:
+          ENVIRONMENT: test
+          DATABASE_URL: postgresql://hms:hms@localhost:5432/hms_test
+          REDIS_URL: redis://localhost:6379/0
+        run: pytest tests/integration/test_gate_g3_e2e.py -v
 
       - name: Test
         env:

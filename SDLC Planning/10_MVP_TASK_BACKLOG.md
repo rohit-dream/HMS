@@ -111,50 +111,50 @@
 
 | ID | Task | Hrs | Status |
 |----|------|-----|--------|
-| MVP-069 | Alembic 006 patient tables + RLS | 4 | ❌ |
-| MVP-070 | pg_trgm extension + search indexes | 2 | ❌ |
-| MVP-071 | MRN generator function | 2 | ❌ |
-| MVP-072 | Patient CRUD API | 6 | ❌ |
-| MVP-073 | Allergies + contacts API | 3 | ❌ |
-| MVP-074 | Chronic conditions API | 2 | ❌ |
-| MVP-075 | Visit history API | 3 | ❌ |
-| MVP-076 | Duplicate detection API | 3 | ❌ |
-| MVP-077 | Consent on registration | 2 | ❌ |
-| MVP-078 | Trial patient cap | 2 | ❌ |
-| MVP-079 | Patient list + search UI | 5 | ❌ |
-| MVP-080 | Registration form UI | 5 | ❌ |
-| MVP-081 | Patient profile UI | 4 | ❌ |
-| MVP-082 | Patient tests | 5 | ❌ |
+| MVP-069 | Alembic 006 patient tables + RLS | 4 | ✅ |
+| MVP-070 | pg_trgm extension + search indexes | 2 | ✅ |
+| MVP-071 | MRN generator function | 2 | ✅ |
+| MVP-072 | Patient CRUD API | 6 | ✅ |
+| MVP-073 | Allergies + contacts API | 3 | ✅ |
+| MVP-074 | Chronic conditions API | 2 | ✅ |
+| MVP-075 | Visit history API | 3 | ✅ |
+| MVP-076 | Duplicate detection API | 3 | ✅ |
+| MVP-077 | Consent on registration | 2 | ✅ |
+| MVP-078 | Trial patient cap | 2 | ✅ |
+| MVP-079 | Patient list + search UI | 5 | ✅ |
+| MVP-080 | Registration form UI | 5 | ✅ |
+| MVP-081 | Patient profile UI | 4 | ✅ |
+| MVP-082 | Patient tests | 5 | ✅ |
 
 ## Sprint 8 — Appointments (MVP-083 – MVP-090)
 
 | ID | Task | Hrs | Status |
 |----|------|-----|--------|
-| MVP-083 | Alembic 007 appointments + RLS | 2 | ❌ |
-| MVP-084 | Appointments CRUD API | 6 | ❌ |
-| MVP-085 | Availability check API | 4 | ❌ |
-| MVP-086 | Confirm/cancel endpoints | 2 | ❌ |
-| MVP-087 | Appointment calendar UI | 6 | ❌ |
-| MVP-088 | Booking modal UI | 4 | ❌ |
-| MVP-089 | Conflict 409 tests | 2 | ❌ |
-| MVP-090 | Appointment integration tests | 4 | ❌ |
+| MVP-083 | Alembic 007 appointments + RLS | 2 | ✅ |
+| MVP-084 | Appointments CRUD API | 6 | ✅ |
+| MVP-085 | Availability check API | 4 | ✅ |
+| MVP-086 | Confirm/cancel endpoints | 2 | ✅ |
+| MVP-087 | Appointment calendar UI | 6 | ✅ |
+| MVP-088 | Booking modal UI | 4 | ✅ |
+| MVP-089 | Conflict 409 tests | 2 | ✅ |
+| MVP-090 | Appointment integration tests | 4 | ✅ |
 
 ## Sprint 9 — OPD (MVP-091 – MVP-102)
 
 | ID | Task | Hrs | Status |
 |----|------|-----|--------|
-| MVP-091 | Alembic 008 OPD tables + RLS | 4 | ❌ |
-| MVP-092 | OPD visits API | 5 | ❌ |
-| MVP-093 | Queue API | 5 | ❌ |
-| MVP-094 | Vitals + notes API | 5 | ❌ |
-| MVP-095 | E-prescription API | 5 | ❌ |
-| MVP-096 | Queue polling endpoint | 2 | ❌ |
-| MVP-097 | OPD queue board UI | 5 | ❌ |
-| MVP-098 | Doctor consultation UI | 8 | ❌ |
-| MVP-099 | Patient visit history UI | 3 | ❌ |
-| MVP-100 | PHI access on consult | 2 | ❌ |
-| MVP-101 | OPD workflow integration test | 4 | ❌ |
-| MVP-102 | Gate G3 E2E | 3 | ❌ |
+| MVP-091 | Alembic 008 OPD tables + RLS | 4 | ✅ |
+| MVP-092 | OPD visits API | 5 | ✅ |
+| MVP-093 | Queue API | 5 | ✅ |
+| MVP-094 | Vitals + notes API | 5 | ✅ |
+| MVP-095 | E-prescription API | 5 | ✅ |
+| MVP-096 | Queue polling endpoint | 2 | ✅ |
+| MVP-097 | OPD queue board UI | 5 | ✅ |
+| MVP-098 | Doctor consultation UI | 8 | ✅ |
+| MVP-099 | Patient visit history UI | 3 | ✅ |
+| MVP-100 | PHI access on consult | 2 | ✅ |
+| MVP-101 | OPD workflow integration test | 4 | ✅ |
+| MVP-102 | Gate G3 E2E | 3 | ✅ |
 
 ## Sprint 10 — Billing (MVP-103 – MVP-115)
 
@@ -210,9 +210,12 @@
 
 | Sprint | Tasks | Done | Remaining |
 |--------|-------|------|-----------|
-| S1 | 10 | 8 | 2 |
-| S2 | 10 | 4 | 6 |
-| S3 | 15 | 4 | 11 |
-| S4 | 15 | 6 | 9 |
-| S5–S12 | 85 | 0 | 85 |
-| **Total** | **135** | **~22** | **~113** |
+| S1 | 10 | 10 | 0 |
+| S2 | 10 | 10 | 0 |
+| S3 | 15 | 15 | 0 |
+| S4 | 15 | 15 | 0 |
+| S5 | 8 | 8 | 0 |
+| S6 | 10 | 10 | 0 |
+| S7 | 14 | 14 | 0 |
+| S8–S12 | 53 | 0 | 53 |
+| **Total** | **135** | **82** | **53** |

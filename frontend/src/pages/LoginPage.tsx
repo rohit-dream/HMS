@@ -1,6 +1,16 @@
 import { FormEvent, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ApiError } from "@/api/errors";
+import {
+  alertErrorClassName,
+  alertSuccessClassName,
+  alertWarningClassName,
+  authLinkClassName,
+  inputClassName,
+  labelClassName,
+  labelTextClassName,
+  primaryButtonClassName,
+} from "@/components/auth/auth-styles";
 import { DEFAULT_TENANT_SLUG } from "@/lib/constants";
 import { resolvePostAuthPath } from "@/lib/role-landing";
 import { useAuth } from "@/providers/AuthProvider";
@@ -49,70 +59,64 @@ export function LoginPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="auth-shell">
       <div className="text-center">
-        <h1 className="text-2xl font-semibold text-slate-900">Sign in</h1>
-        <p className="mt-1 text-sm text-muted">Use your hospital tenant credentials</p>
+        <h1 className="text-2xl font-semibold text-foreground">Sign in</h1>
+        <p className="mt-1.5 text-sm text-muted">Use your hospital tenant credentials</p>
       </div>
 
       {sessionExpired && (
-        <p
-          className="rounded-lg bg-amber-50 px-3 py-2 text-center text-sm text-amber-900"
-          role="status"
-        >
+        <p className={alertWarningClassName} role="status">
           Your session expired due to inactivity. Please sign in again.
         </p>
       )}
 
       {successMessage && (
-        <p
-          className="rounded-lg bg-green-50 px-3 py-2 text-center text-sm text-success"
-          role="status"
-        >
+        <p className={alertSuccessClassName} role="status">
           {successMessage}
         </p>
       )}
 
       <form className="space-y-4" onSubmit={handleSubmit}>
-        <label className="block space-y-1 text-sm">
-          <span className="font-medium text-slate-700">Tenant slug</span>
+        <label className={labelClassName}>
+          <span className={labelTextClassName}>Tenant slug</span>
           <input
             type="text"
             required
             autoComplete="organization"
             value={tenantSlug}
             onChange={(event) => setTenantSlug(event.target.value)}
-            className="w-full rounded-lg border border-border px-3 py-2 outline-none ring-primary focus:ring-2"
+            className={inputClassName}
             placeholder="apollo-clinic"
           />
         </label>
 
-        <label className="block space-y-1 text-sm">
-          <span className="font-medium text-slate-700">Email</span>
+        <label className={labelClassName}>
+          <span className={labelTextClassName}>Email</span>
           <input
             type="email"
             required
             autoComplete="email"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
-            className="w-full rounded-lg border border-border px-3 py-2 outline-none ring-primary focus:ring-2"
+            className={inputClassName}
           />
         </label>
 
-        <label className="block space-y-1 text-sm">
-          <span className="font-medium text-slate-700">Password</span>
+        <label className={labelClassName}>
+          <span className={labelTextClassName}>Password</span>
           <input
             type="password"
             required
             autoComplete="current-password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
-            className="w-full rounded-lg border border-border px-3 py-2 outline-none ring-primary focus:ring-2"
+            className={inputClassName}
           />
         </label>
 
         {error && (
-          <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-error" role="alert">
+          <p className={alertErrorClassName} role="alert">
             {error}
           </p>
         )}
@@ -120,18 +124,18 @@ export function LoginPage() {
         <button
           type="submit"
           disabled={submitting || isLoading}
-          className="w-full rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-white hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
+          className={primaryButtonClassName}
         >
           {submitting ? "Signing in…" : "Sign in"}
         </button>
       </form>
 
       <p className="text-center text-xs text-muted">
-        <Link to="/forgot-password" className="text-primary hover:underline">
+        <Link to="/forgot-password" className={authLinkClassName}>
           Forgot password?
         </Link>
         {" · "}
-        <Link to="/register" className="text-primary hover:underline">
+        <Link to="/register" className={authLinkClassName}>
           Register hospital
         </Link>
       </p>

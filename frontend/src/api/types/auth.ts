@@ -45,3 +45,8 @@ export interface ResetPasswordPayload {
   token: string;
   newPassword: string;
 }
+
+export interface AcceptInvitePayload {
+  inviteToken: string;
+  password: string;
+}

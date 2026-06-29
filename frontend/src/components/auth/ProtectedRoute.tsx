@@ -12,8 +12,11 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-surface text-sm text-muted">
-        Loading session…
+      <div className="flex min-h-screen items-center justify-center text-sm text-muted">
+        <span className="inline-flex items-center gap-2">
+          <span className="h-4 w-4 animate-spin rounded-full border-2 border-border border-t-primary" />
+          Loading session…
+        </span>
       </div>
     );
   }

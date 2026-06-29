@@ -6,6 +6,7 @@ from app.api.v1 import (
     admin,
     admin_departments,
     admin_users,
+    appointments,
     auth,
     doctor_schedules,
     doctors,
@@ -29,4 +30,5 @@ api_router.include_router(staff.router)
 api_router.include_router(doctors.router)
 api_router.include_router(doctor_schedules.router)
 api_router.include_router(patients.router)
+api_router.include_router(appointments.router)
 api_router.include_router(opd.router)

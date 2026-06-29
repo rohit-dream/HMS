@@ -8,6 +8,7 @@ from starlette.middleware.cors import CORSMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
 
+from app.core.audit_middleware import create_mutation_audit_middleware
 from app.core.config import Settings
 from app.core.constants import REQUEST_ID_HEADER, TENANT_ID_HEADER
 from app.core.logging import bind_request_context, clear_request_context
@@ -41,6 +42,12 @@ def register_middleware(app: FastAPI, settings: Settings) -> None:
         if not hasattr(request.state, "roles"):
             request.state.roles = []
         return await call_next(request)
+
+    mutation_audit = create_mutation_audit_middleware(settings)
+
+    @app.middleware("http")
+    async def mutation_audit_middleware(request: Request, call_next: Callable) -> Response:
+        return await mutation_audit(request, call_next)
 
     app.add_middleware(
         CORSMiddleware,

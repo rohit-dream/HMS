@@ -88,7 +88,7 @@ def upgrade() -> None:
         CREATE TABLE platform.tenant_subscriptions (
             id                              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             tenant_id                       UUID NOT NULL REFERENCES platform.tenants(id),
-            plan_id                         UUID NOT NULL REFERENCES platform.subscription_plans(id),
+            plan_id                         UUID NOT NULL,
             status                          VARCHAR(20) NOT NULL DEFAULT 'trial'
                                             CHECK (status IN ('trial', 'active', 'past_due', 'suspended', 'cancelled')),
             billing_cycle                   VARCHAR(10) NOT NULL DEFAULT 'monthly'
@@ -135,6 +135,13 @@ def upgrade() -> None:
         """
         CREATE TRIGGER trg_tenant_subscriptions_updated_at BEFORE UPDATE ON platform.tenant_subscriptions
             FOR EACH ROW EXECUTE FUNCTION public.set_updated_at()
+        """
+    )
+    op.execute(
+        """
+        ALTER TABLE platform.tenant_subscriptions
+            ADD CONSTRAINT fk_tsub_plan FOREIGN KEY (tenant_id, plan_id)
+            REFERENCES platform.subscription_plans (tenant_id, id)
         """
     )
 
