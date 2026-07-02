@@ -15,6 +15,7 @@ from app.api.v1 import (
     opd,
     patients,
     platform,
+    subscription,
     staff,
 )
 
@@ -32,3 +33,4 @@ api_router.include_router(doctor_schedules.router)
 api_router.include_router(patients.router)
 api_router.include_router(appointments.router)
 api_router.include_router(opd.router)
+api_router.include_router(subscription.router)

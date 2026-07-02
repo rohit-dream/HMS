@@ -2219,6 +2219,36 @@
         "title": "PatientUpdateRequest",
         "type": "object"
       },
+      "RazorpayAddPaymentMethodRequest": {
+        "description": "Tokenization verification payload from the frontend.\n\nThe frontend initiates Razorpay Checkout and submits these values:\n- razorpay_payment_id\n- razorpay_order_id\n- razorpay_signature",
+        "properties": {
+          "razorpay_order_id": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Razorpay Order Id",
+            "type": "string"
+          },
+          "razorpay_payment_id": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Razorpay Payment Id",
+            "type": "string"
+          },
+          "razorpay_signature": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Razorpay Signature",
+            "type": "string"
+          }
+        },
+        "required": [
+          "razorpay_payment_id",
+          "razorpay_order_id",
+          "razorpay_signature"
+        ],
+        "title": "RazorpayAddPaymentMethodRequest",
+        "type": "object"
+      },
       "ResetPasswordRequest": {
         "properties": {
           "new_password": {
@@ -3078,35 +3108,6 @@
   },
   "openapi": "3.1.0",
   "paths": {
-    "/api/v1/admin/audit": {
-      "get": {
-        "description": "Audit log viewer \u2014 requires audit:read.",
-        "operationId": "list_audit_logs_api_v1_admin_audit_get",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "additionalProperties": true,
-                  "title": "Response List Audit Logs Api V1 Admin Audit Get",
-                  "type": "object"
-                }
-              }
-            },
-            "description": "Successful Response"
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "summary": "List Audit Logs",
-        "tags": [
-          "admin"
-        ]
-      }
-    },
     "/api/v1/admin/departments": {
       "get": {
         "description": "List departments for the current tenant.",
@@ -6075,9 +6076,9 @@
             }
           },
           {
-            "description": "Queue date; defaults to today",
+            "description": "Queue date",
             "in": "query",
-            "name": "queue_date",
+            "name": "date",
             "required": false,
             "schema": {
               "anyOf": [
@@ -6089,8 +6090,8 @@
                   "type": "null"
                 }
               ],
-              "description": "Queue date; defaults to today",
-              "title": "Queue Date"
+              "description": "Queue date",
+              "title": "Date"
             }
           },
           {
@@ -6128,6 +6129,18 @@
           }
         ],
         "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Get Queue Board Api V1 Opd Queue Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
           "422": {
             "content": {
               "application/json": {
@@ -6137,17 +6150,6 @@
               }
             },
             "description": "Validation Error"
-          },
-          "501": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response Get Queue Board Api V1 Opd Queue Get",
-                  "type": "null"
-                }
-              }
-            },
-            "description": "Successful Response"
           }
         },
         "security": [
@@ -6174,6 +6176,14 @@
           "required": true
         },
         "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
           "422": {
             "content": {
               "application/json": {
@@ -6183,17 +6193,6 @@
               }
             },
             "description": "Validation Error"
-          },
-          "501": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response Add To Queue Api V1 Opd Queue Post",
-                  "type": "null"
-                }
-              }
-            },
-            "description": "Successful Response"
           }
         },
         "security": [
@@ -6202,6 +6201,123 @@
           }
         ],
         "summary": "Add To Queue",
+        "tags": [
+          "OPD"
+        ]
+      }
+    },
+    "/api/v1/opd/queue/poll": {
+      "get": {
+        "description": "Poll doctor queue with ETag support (recommended interval: 5 seconds).",
+        "operationId": "poll_queue_board_api_v1_opd_queue_poll_get",
+        "parameters": [
+          {
+            "description": "Doctor whose queue to poll",
+            "in": "query",
+            "name": "doctor_id",
+            "required": true,
+            "schema": {
+              "description": "Doctor whose queue to poll",
+              "format": "uuid",
+              "title": "Doctor Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Queue date",
+            "in": "query",
+            "name": "date",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Queue date",
+              "title": "Date"
+            }
+          },
+          {
+            "in": "query",
+            "name": "location_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Location Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "in": "header",
+            "name": "If-None-Match",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "If-None-Match"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Poll Queue Board",
         "tags": [
           "OPD"
         ]
@@ -6234,6 +6350,18 @@
           "required": true
         },
         "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Update Queue Entry Api V1 Opd Queue  Queue Id  Patch",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
           "422": {
             "content": {
               "application/json": {
@@ -6243,17 +6371,6 @@
               }
             },
             "description": "Validation Error"
-          },
-          "501": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response Update Queue Entry Api V1 Opd Queue  Queue Id  Patch",
-                  "type": "null"
-                }
-              }
-            },
-            "description": "Successful Response"
           }
         },
         "security": [
@@ -6284,6 +6401,18 @@
           }
         ],
         "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Call Queue Patient Api V1 Opd Queue  Queue Id  Call Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
           "422": {
             "content": {
               "application/json": {
@@ -6293,17 +6422,6 @@
               }
             },
             "description": "Validation Error"
-          },
-          "501": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response Call Queue Patient Api V1 Opd Queue  Queue Id  Call Post",
-                  "type": "null"
-                }
-              }
-            },
-            "description": "Successful Response"
           }
         },
         "security": [
@@ -6334,6 +6452,18 @@
           }
         ],
         "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Complete Queue Entry Api V1 Opd Queue  Queue Id  Complete Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
           "422": {
             "content": {
               "application/json": {
@@ -6343,17 +6473,6 @@
               }
             },
             "description": "Validation Error"
-          },
-          "501": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response Complete Queue Entry Api V1 Opd Queue  Queue Id  Complete Post",
-                  "type": "null"
-                }
-              }
-            },
-            "description": "Successful Response"
           }
         },
         "security": [
@@ -6394,6 +6513,18 @@
           "required": true
         },
         "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Skip Queue Patient Api V1 Opd Queue  Queue Id  Skip Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
           "422": {
             "content": {
               "application/json": {
@@ -6403,17 +6534,6 @@
               }
             },
             "description": "Validation Error"
-          },
-          "501": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response Skip Queue Patient Api V1 Opd Queue  Queue Id  Skip Post",
-                  "type": "null"
-                }
-              }
-            },
-            "description": "Successful Response"
           }
         },
         "security": [
@@ -6595,6 +6715,18 @@
           }
         ],
         "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response List Visits Api V1 Opd Visits Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
           "422": {
             "content": {
               "application/json": {
@@ -6604,17 +6736,6 @@
               }
             },
             "description": "Validation Error"
-          },
-          "501": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response List Visits Api V1 Opd Visits Get",
-                  "type": "null"
-                }
-              }
-            },
-            "description": "Successful Response"
           }
         },
         "security": [
@@ -6641,6 +6762,14 @@
           "required": true
         },
         "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
           "422": {
             "content": {
               "application/json": {
@@ -6650,17 +6779,6 @@
               }
             },
             "description": "Validation Error"
-          },
-          "501": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response Create Visit Api V1 Opd Visits Post",
-                  "type": "null"
-                }
-              }
-            },
-            "description": "Successful Response"
           }
         },
         "security": [
@@ -6691,6 +6809,18 @@
           }
         ],
         "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Get Visit Api V1 Opd Visits  Visit Id  Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
           "422": {
             "content": {
               "application/json": {
@@ -6700,17 +6830,6 @@
               }
             },
             "description": "Validation Error"
-          },
-          "501": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response Get Visit Api V1 Opd Visits  Visit Id  Get",
-                  "type": "null"
-                }
-              }
-            },
-            "description": "Successful Response"
           }
         },
         "security": [
@@ -6749,6 +6868,18 @@
           "required": true
         },
         "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Update Visit Api V1 Opd Visits  Visit Id  Patch",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
           "422": {
             "content": {
               "application/json": {
@@ -6758,17 +6889,6 @@
               }
             },
             "description": "Validation Error"
-          },
-          "501": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response Update Visit Api V1 Opd Visits  Visit Id  Patch",
-                  "type": "null"
-                }
-              }
-            },
-            "description": "Successful Response"
           }
         },
         "security": [
@@ -6809,6 +6929,18 @@
           "required": true
         },
         "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Cancel Visit Api V1 Opd Visits  Visit Id  Cancel Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
           "422": {
             "content": {
               "application/json": {
@@ -6818,17 +6950,6 @@
               }
             },
             "description": "Validation Error"
-          },
-          "501": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response Cancel Visit Api V1 Opd Visits  Visit Id  Cancel Post",
-                  "type": "null"
-                }
-              }
-            },
-            "description": "Successful Response"
           }
         },
         "security": [
@@ -6876,6 +6997,18 @@
           }
         },
         "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Complete Visit Api V1 Opd Visits  Visit Id  Complete Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
           "422": {
             "content": {
               "application/json": {
@@ -6885,17 +7018,6 @@
               }
             },
             "description": "Validation Error"
-          },
-          "501": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response Complete Visit Api V1 Opd Visits  Visit Id  Complete Post",
-                  "type": "null"
-                }
-              }
-            },
-            "description": "Successful Response"
           }
         },
         "security": [
@@ -6948,6 +7070,18 @@
           }
         ],
         "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response List Notes Api V1 Opd Visits  Visit Id  Notes Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
           "422": {
             "content": {
               "application/json": {
@@ -6957,17 +7091,6 @@
               }
             },
             "description": "Validation Error"
-          },
-          "501": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response List Notes Api V1 Opd Visits  Visit Id  Notes Get",
-                  "type": "null"
-                }
-              }
-            },
-            "description": "Successful Response"
           }
         },
         "security": [
@@ -7006,6 +7129,14 @@
           "required": true
         },
         "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
           "422": {
             "content": {
               "application/json": {
@@ -7015,17 +7146,6 @@
               }
             },
             "description": "Validation Error"
-          },
-          "501": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response Create Note Api V1 Opd Visits  Visit Id  Notes Post",
-                  "type": "null"
-                }
-              }
-            },
-            "description": "Successful Response"
           }
         },
         "security": [
@@ -7056,6 +7176,18 @@
           }
         ],
         "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response List Prescriptions Api V1 Opd Visits  Visit Id  Prescriptions Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
           "422": {
             "content": {
               "application/json": {
@@ -7065,17 +7197,6 @@
               }
             },
             "description": "Validation Error"
-          },
-          "501": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response List Prescriptions Api V1 Opd Visits  Visit Id  Prescriptions Get",
-                  "type": "null"
-                }
-              }
-            },
-            "description": "Successful Response"
           }
         },
         "security": [
@@ -7114,6 +7235,14 @@
           "required": true
         },
         "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
           "422": {
             "content": {
               "application/json": {
@@ -7123,17 +7252,6 @@
               }
             },
             "description": "Validation Error"
-          },
-          "501": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response Create Prescription Api V1 Opd Visits  Visit Id  Prescriptions Post",
-                  "type": "null"
-                }
-              }
-            },
-            "description": "Successful Response"
           }
         },
         "security": [
@@ -7174,6 +7292,18 @@
           }
         ],
         "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Get Prescription Api V1 Opd Visits  Visit Id  Prescriptions  Prescription Id  Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
           "422": {
             "content": {
               "application/json": {
@@ -7183,17 +7313,6 @@
               }
             },
             "description": "Validation Error"
-          },
-          "501": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response Get Prescription Api V1 Opd Visits  Visit Id  Prescriptions  Prescription Id  Get",
-                  "type": "null"
-                }
-              }
-            },
-            "description": "Successful Response"
           }
         },
         "security": [
@@ -7241,6 +7360,18 @@
           }
         },
         "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Start Visit Api V1 Opd Visits  Visit Id  Start Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
           "422": {
             "content": {
               "application/json": {
@@ -7250,17 +7381,6 @@
               }
             },
             "description": "Validation Error"
-          },
-          "501": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response Start Visit Api V1 Opd Visits  Visit Id  Start Post",
-                  "type": "null"
-                }
-              }
-            },
-            "description": "Successful Response"
           }
         },
         "security": [
@@ -7291,6 +7411,18 @@
           }
         ],
         "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response List Vitals Api V1 Opd Visits  Visit Id  Vitals Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
           "422": {
             "content": {
               "application/json": {
@@ -7300,17 +7432,6 @@
               }
             },
             "description": "Validation Error"
-          },
-          "501": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response List Vitals Api V1 Opd Visits  Visit Id  Vitals Get",
-                  "type": "null"
-                }
-              }
-            },
-            "description": "Successful Response"
           }
         },
         "security": [
@@ -7349,6 +7470,14 @@
           "required": true
         },
         "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
           "422": {
             "content": {
               "application/json": {
@@ -7358,17 +7487,6 @@
               }
             },
             "description": "Validation Error"
-          },
-          "501": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "title": "Response Record Vitals Api V1 Opd Visits  Visit Id  Vitals Post",
-                  "type": "null"
-                }
-              }
-            },
-            "description": "Successful Response"
           }
         },
         "security": [
@@ -8162,6 +8280,57 @@
         ]
       }
     },
+    "/api/v1/patients/{patient_id}/documents": {
+      "get": {
+        "description": "List uploaded patient documents with short-lived download URLs.",
+        "operationId": "list_patient_documents_api_v1_patients__patient_id__documents_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "patient_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Patient Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response List Patient Documents Api V1 Patients  Patient Id  Documents Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Patient Documents",
+        "tags": [
+          "patients"
+        ]
+      }
+    },
     "/api/v1/patients/{patient_id}/visits": {
       "get": {
         "description": "List patient visit history \u2014 requires patient:read.",
@@ -8854,6 +9023,320 @@
         "summary": "Update Staff",
         "tags": [
           "staff"
+        ]
+      }
+    },
+    "/api/v1/subscription/payment-methods": {
+      "get": {
+        "description": "List tokenized subscription payment methods \u2014 requires admin:subscription.",
+        "operationId": "list_payment_methods_api_v1_subscription_payment_methods_get",
+        "parameters": [
+          {
+            "description": "Filter by payment method type",
+            "in": "query",
+            "name": "method_type",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by payment method type",
+              "title": "Method Type"
+            }
+          },
+          {
+            "in": "query",
+            "name": "is_default",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Is Default"
+            }
+          },
+          {
+            "description": "Search by gateway token/customer/id/brand",
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Search by gateway token/customer/id/brand",
+              "title": "Search"
+            }
+          },
+          {
+            "description": "Page number (1-based)",
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "description": "Page number (1-based)",
+              "minimum": 1,
+              "title": "Page",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Items per page",
+            "in": "query",
+            "name": "page_size",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "description": "Items per page",
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Page Size",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response List Payment Methods Api V1 Subscription Payment Methods Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Payment Methods",
+        "tags": [
+          "subscription"
+        ]
+      },
+      "post": {
+        "description": "Add a payment method (Razorpay tokenization verification) \u2014 requires admin:subscription.",
+        "operationId": "add_payment_method_api_v1_subscription_payment_methods_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RazorpayAddPaymentMethodRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Add Payment Method",
+        "tags": [
+          "subscription"
+        ]
+      }
+    },
+    "/api/v1/subscription/payment-methods/{payment_method_id}": {
+      "delete": {
+        "description": "Remove a payment method \u2014 requires admin:subscription.",
+        "operationId": "remove_payment_method_api_v1_subscription_payment_methods__payment_method_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "payment_method_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Payment Method Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Remove Payment Method Api V1 Subscription Payment Methods  Payment Method Id  Delete",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Remove Payment Method",
+        "tags": [
+          "subscription"
+        ]
+      },
+      "get": {
+        "description": "Get a single payment method \u2014 requires admin:subscription.",
+        "operationId": "get_payment_method_api_v1_subscription_payment_methods__payment_method_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "payment_method_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Payment Method Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Get Payment Method Api V1 Subscription Payment Methods  Payment Method Id  Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Payment Method",
+        "tags": [
+          "subscription"
+        ]
+      }
+    },
+    "/api/v1/subscription/payment-methods/{payment_method_id}/default": {
+      "put": {
+        "description": "Set a payment method as default \u2014 requires admin:subscription.",
+        "operationId": "set_default_payment_method_api_v1_subscription_payment_methods__payment_method_id__default_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "payment_method_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Payment Method Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Set Default Payment Method Api V1 Subscription Payment Methods  Payment Method Id  Default Put",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Set Default Payment Method",
+        "tags": [
+          "subscription"
         ]
       }
     }

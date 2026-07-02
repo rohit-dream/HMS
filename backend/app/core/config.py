@@ -71,6 +71,11 @@ class Settings(BaseSettings):
     email_provider: Literal["log", "ses"] = "log"
     frontend_base_url: str = "http://localhost:5173"
 
+    # Razorpay (Sprint 11 — placeholders; defaults allow local dev/openapi generation)
+    razorpay_key_id: str = ""
+    razorpay_key_secret: str = ""
+    razorpay_webhook_secret: str = ""
+
     # Startup validation
     skip_startup_checks: bool = False
 
